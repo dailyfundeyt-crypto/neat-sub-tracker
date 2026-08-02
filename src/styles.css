@@ -150,3 +150,19 @@
     color: var(--color-foreground);
   }
 }
+
+.dark {
+  --warning: oklch(0.85 0.13 92);
+  --warning-foreground: oklch(0.2 0.04 70);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+}
