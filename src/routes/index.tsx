@@ -15,11 +15,11 @@ export const Route = createFileRoute("/")({
         content:
           "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.",
       },
-      { property: "og:title", content: "HyperLite – Abos im Blick" },
+      { property: "og:title", content: "HyperLite – Abos, Kosten und Kündigungen im Blick" },
       {
         property: "og:description",
         content:
-          "Abos erfassen, Kosten analysieren und Rabatte der Community entdecken.",
+          "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

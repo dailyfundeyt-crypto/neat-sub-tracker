@@ -79,20 +79,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "HyperLite – Abos im Blick" },
+      { title: "HyperLite – Abos, Kosten und Kündigungen im Blick" },
       {
         name: "description",
         content:
-          "HyperLite bündelt deine Abos: Kosten, Zahlungen, Kündigungsfristen und Rabatte.",
+          "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.",
       },
-      { property: "og:title", content: "HyperLite – Abos im Blick" },
+      { property: "og:title", content: "HyperLite – Abos, Kosten und Kündigungen im Blick" },
       {
         property: "og:description",
         content:
-          "HyperLite bündelt deine Abos: Kosten, Zahlungen, Kündigungsfristen und Rabatte.",
+          "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "HyperLite – Abos, Kosten und Kündigungen im Blick" },
+      { name: "twitter:description", content: "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d3574f6f-ba86-4e87-a094-4d2b464c9ddc/id-preview-6c1a8eb1--e10f46a5-83a8-443d-9a1a-3b2d49f97313.lovable.app-1785682949716.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d3574f6f-ba86-4e87-a094-4d2b464c9ddc/id-preview-6c1a8eb1--e10f46a5-83a8-443d-9a1a-3b2d49f97313.lovable.app-1785682949716.png" },
     ],
     links: [
       {
