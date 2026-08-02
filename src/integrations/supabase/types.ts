@@ -14,7 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      deals: {
+        Row: {
+          code: string | null
+          created_at: string
+          created_by: string
+          id: string
+          logo_url: string | null
+          service_name: string
+          title: string
+          url: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          logo_url?: string | null
+          service_name: string
+          title: string
+          url?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          logo_url?: string | null
+          service_name?: string
+          title?: string
+          url?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      service_logos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          logo_url: string
+          name: string
+          name_key: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          logo_url: string
+          name: string
+          name_key: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          logo_url?: string
+          name?: string
+          name_key?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          billing_interval: string
+          cancel_by: string | null
+          category: string
+          created_at: string
+          credit: number
+          id: string
+          logo_url: string | null
+          name: string
+          next_payment: string | null
+          price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_interval?: string
+          cancel_by?: string | null
+          category?: string
+          created_at?: string
+          credit?: number
+          id?: string
+          logo_url?: string | null
+          name: string
+          next_payment?: string | null
+          price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_interval?: string
+          cancel_by?: string | null
+          category?: string
+          created_at?: string
+          credit?: number
+          id?: string
+          logo_url?: string | null
+          name?: string
+          next_payment?: string | null
+          price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
