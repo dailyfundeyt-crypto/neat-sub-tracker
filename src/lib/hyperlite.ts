@@ -20,11 +20,42 @@ export type Deal = {
   service_name: string;
   logo_url: string | null;
   title: string;
+  description: string | null;
   code: string | null;
   url: string | null;
   valid_until: string | null;
   created_at: string;
 };
+
+export type Income = {
+  id: string;
+  user_id: string;
+  name: string;
+  category: string;
+  amount: number;
+  interval: BillingInterval | "once";
+  next_payout: string | null;
+  note: string | null;
+  created_at: string;
+};
+
+export const INCOME_CATEGORIES = [
+  "Freelance",
+  "Online-Shop",
+  "Content & Creator",
+  "Nachhilfe & Coaching",
+  "Vermietung",
+  "Dividenden & Zinsen",
+  "Verkauf",
+  "Sonstiges",
+];
+
+/** Einnahme auf Monatsbasis (Einmalzahlungen zählen nicht wiederkehrend). */
+export function monthlyIncome(inc: Income): number {
+  if (inc.interval === "yearly") return inc.amount / 12;
+  if (inc.interval === "once") return 0;
+  return inc.amount;
+}
 
 export const CATEGORIES = [
   "Software",
