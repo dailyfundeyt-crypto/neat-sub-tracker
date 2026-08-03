@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Database, Plug, Plus, SlidersHorizontal, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Database, Moon, Plug, Plus, SlidersHorizontal, Sun, X } from "lucide-react";
 import { CURRENCIES, useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,7 +22,22 @@ const settingsTabs = [
   { id: "data", label: "Daten", Icon: Database },
 ] as const;
 
+const themeOptions = [
+  { id: "light", label: "Hell", Icon: Sun },
+  { id: "dark", label: "Dunkel", Icon: Moon },
+] as const;
+
 type SettingsTab = (typeof settingsTabs)[number]["id"];
+type Theme = (typeof themeOptions)[number]["id"];
+
+const THEME_STORAGE_KEY = "hyperlite-theme";
+
+function applyTheme(theme: Theme) {
+  if (typeof document === "undefined") return;
+
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.style.colorScheme = theme;
+}
 
 export function SettingsDialog({
   open,
@@ -36,6 +51,21 @@ export function SettingsDialog({
   const { currency, setCurrency, expenseGroups, setExpenseGroups } = useCurrency();
   const [draft, setDraft] = useState("");
   const [tab, setTab] = useState<SettingsTab>("general");
+  const [theme, setTheme] = useState<Theme>("light");
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const nextTheme: Theme = savedTheme === "dark" ? "dark" : "light";
+
+    setTheme(nextTheme);
+    applyTheme(nextTheme);
+  }, []);
+
+  function chooseTheme(nextTheme: Theme) {
+    setTheme(nextTheme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    applyTheme(nextTheme);
+  }
 
   function addGroup() {
     const name = draft.trim();
@@ -46,7 +76,7 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="liquid-glass max-h-[92dvh] overflow-y-auto rounded-3xl border sm:max-w-3xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto rounded-3xl border border-border/80 bg-background/95 shadow-[0_24px_80px_oklch(0_0_0_/_0.18)] backdrop-blur-xl sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-display text-lg">Einstellungen</DialogTitle>
         </DialogHeader>
@@ -75,6 +105,29 @@ export function SettingsDialog({
           <div className="min-w-0">
             {tab === "general" && (
               <div className="space-y-5">
+                <div>
+                  <Label>Darstellung</Label>
+                  <div className="mt-2 grid grid-cols-2 gap-1 rounded-2xl border border-border/70 bg-muted/45 p-1">
+                    {themeOptions.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => chooseTheme(item.id)}
+                        aria-pressed={theme === item.id}
+                        className={cn(
+                          "flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors",
+                          theme === item.id
+                            ? "bg-foreground text-background shadow-sm"
+                            : "text-muted-foreground hover:bg-background/80 hover:text-foreground",
+                        )}
+                      >
+                        <item.Icon className="h-4 w-4" />
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
                   <Label>Währung</Label>
                   <Select value={currency} onValueChange={(value) => void setCurrency(value)}>
