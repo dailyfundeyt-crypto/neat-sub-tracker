@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   INCOME_CATEGORIES,
-  euro,
+  INCOME_GROUPS,
   formatDate,
   monthlyIncome,
   type Income,
 } from "@/lib/hyperlite";
+import { useCurrency } from "@/lib/currency";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 import {
@@ -30,6 +31,7 @@ import {
 
 const empty = {
   name: "",
+  group_name: INCOME_GROUPS[0]!,
   category: "Freelance",
   amount: "",
   interval: "monthly" as Income["interval"],
@@ -38,6 +40,7 @@ const empty = {
 };
 
 export function IncomePanel({ userId }: { userId: string }) {
+  const { money, symbol } = useCurrency();
   const [items, setItems] = useState<Income[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Income | null>(null);
@@ -61,6 +64,21 @@ export function IncomePanel({ userId }: { userId: string }) {
     [items],
   );
 
+  const groups = useMemo(() => {
+    const names = [
+      ...INCOME_GROUPS,
+      ...items.map((i) => i.group_name).filter((g) => !INCOME_GROUPS.includes(g)),
+    ];
+    return [...new Set(names)].map((name) => {
+      const rows = items.filter((i) => i.group_name === name);
+      return {
+        name,
+        rows,
+        total: rows.reduce((sum, i) => sum + monthlyIncome(i), 0),
+      };
+    });
+  }, [items]);
+
   function openNew() {
     setEditing(null);
     setForm(empty);
@@ -71,6 +89,7 @@ export function IncomePanel({ userId }: { userId: string }) {
     setEditing(inc);
     setForm({
       name: inc.name,
+      group_name: inc.group_name || INCOME_GROUPS[0]!,
       category: inc.category,
       amount: String(inc.amount),
       interval: inc.interval,
@@ -89,6 +108,7 @@ export function IncomePanel({ userId }: { userId: string }) {
     const payload = {
       user_id: userId,
       name: form.name.trim(),
+      group_name: form.group_name,
       category: form.category,
       amount: Number(form.amount.replace(",", ".")) || 0,
       interval: form.interval,
@@ -125,7 +145,7 @@ export function IncomePanel({ userId }: { userId: string }) {
             Einkommen
           </h2>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {euro.format(monthly)} pro Monat aus Side Hustles.
+            {money(monthly)} pro Monat.
           </p>
         </div>
         <button
@@ -140,51 +160,67 @@ export function IncomePanel({ userId }: { userId: string }) {
 
       {items.length === 0 ? (
         <p className="mt-16 text-center text-sm text-muted-foreground">
-          Noch keine Einnahmen. Trag deinen ersten Side Hustle ein.
+          Noch keine Einnahmen. Trag deine erste Quelle ein.
         </p>
       ) : (
-        <ul className="mt-5 space-y-2">
-          {items.map((i) => (
-            <li key={i.id}>
-              <button
-                type="button"
-                onClick={() => openEdit(i)}
-                className="w-full rounded-2xl border border-border p-3 text-left transition-colors hover:bg-muted/50"
-              >
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{i.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {i.category}
-                      {i.next_payout
-                        ? ` · nächste Zahlung ${formatDate(i.next_payout)}`
-                        : ""}
-                    </p>
-                  </div>
-                  <p className="shrink-0 text-right text-sm tabular-nums">
-                    {euro.format(i.amount)}
-                    <span className="block text-[11px] text-muted-foreground">
-                      {i.interval === "yearly"
-                        ? "pro Jahr"
-                        : i.interval === "once"
-                          ? "einmalig"
-                          : "pro Monat"}
-                    </span>
-                  </p>
+        <div className="mt-6 space-y-6">
+          {groups
+            .filter((g) => g.rows.length > 0)
+            .map((g) => (
+              <section key={g.name}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {g.name}
+                  </h3>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {money(g.total)} / Monat
+                  </span>
                 </div>
-                {i.note && (
-                  <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
-                    {i.note}
-                  </p>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
+                <ul className="mt-2 space-y-2">
+                  {g.rows.map((i) => (
+                    <li key={i.id}>
+                      <button
+                        type="button"
+                        onClick={() => openEdit(i)}
+                        className="w-full rounded-2xl border border-border p-3 text-left transition-colors hover:bg-muted/50"
+                      >
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{i.name}</p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {i.category}
+                              {i.next_payout
+                                ? ` · nächste Zahlung ${formatDate(i.next_payout)}`
+                                : ""}
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-right text-sm tabular-nums">
+                            {money(i.amount)}
+                            <span className="block text-[11px] text-muted-foreground">
+                              {i.interval === "yearly"
+                                ? "pro Jahr"
+                                : i.interval === "once"
+                                  ? "einmalig"
+                                  : "pro Monat"}
+                            </span>
+                          </p>
+                        </div>
+                        {i.note && (
+                          <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
+                            {i.note}
+                          </p>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+        </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display text-lg">
               {editing ? "Einnahme bearbeiten" : "Einnahme hinzufügen"}
@@ -199,6 +235,24 @@ export function IncomePanel({ userId }: { userId: string }) {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
+            </div>
+            <div>
+              <Label>Gruppe</Label>
+              <Select
+                value={form.group_name}
+                onValueChange={(v) => setForm({ ...form, group_name: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INCOME_GROUPS.map((g) => (
+                    <SelectItem key={g} value={g}>
+                      {g}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -240,7 +294,7 @@ export function IncomePanel({ userId }: { userId: string }) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="inc-amount">Betrag (€)</Label>
+                <Label htmlFor="inc-amount">Betrag ({symbol})</Label>
                 <Input
                   id="inc-amount"
                   inputMode="decimal"
