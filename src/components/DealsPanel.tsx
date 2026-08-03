@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDate, nameKey, type Deal } from "@/lib/hyperlite";
+import { fileToLogoDataUrl, formatDate, nameKey, type Deal } from "@/lib/hyperlite";
 import { toast } from "sonner";
-import { Plus, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Trash2, ExternalLink, ImagePlus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,7 @@ export function DealsPanel({ userId }: { userId: string }) {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyDeal);
+  const [logo, setLogo] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   async function load() {
@@ -42,22 +43,54 @@ export function DealsPanel({ userId }: { userId: string }) {
     void load();
   }, []);
 
+  useEffect(() => {
+    if (!open || logo) return;
+    const key = nameKey(form.service_name);
+    if (key.length < 2) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from("service_logos")
+        .select("logo_url")
+        .eq("name_key", key)
+        .maybeSingle();
+      if (!cancelled && data?.logo_url) setLogo(data.logo_url);
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [form.service_name, open, logo]);
+
+  async function pickLogo(file: File) {
+    try {
+      setLogo(await fileToLogoDataUrl(file));
+    } catch {
+      toast.error("Bild konnte nicht verarbeitet werden.");
+    }
+  }
+
   async function save() {
     if (!form.service_name.trim() || !form.title.trim()) {
       toast.error("Dienst und Titel sind nötig.");
       return;
     }
     setSaving(true);
-    const { data: logoRow } = await supabase
-      .from("service_logos")
-      .select("logo_url")
-      .eq("name_key", nameKey(form.service_name))
-      .maybeSingle();
+    const serviceName = form.service_name.trim();
+    const serviceKey = nameKey(serviceName);
+    const { data: logoRow } = logo
+      ? { data: null }
+      : await supabase
+          .from("service_logos")
+          .select("logo_url")
+          .eq("name_key", serviceKey)
+          .maybeSingle();
+    const logoUrl = logo ?? logoRow?.logo_url ?? null;
 
     const { error } = await supabase.from("deals").insert({
       created_by: userId,
-      service_name: form.service_name.trim(),
-      logo_url: logoRow?.logo_url ?? null,
+      service_name: serviceName,
+      logo_url: logoUrl,
       title: form.title.trim(),
       description: form.description.trim() || null,
       code: form.code.trim() || null,
@@ -69,7 +102,19 @@ export function DealsPanel({ userId }: { userId: string }) {
       toast.error("Speichern fehlgeschlagen.");
       return;
     }
+    if (logoUrl) {
+      await supabase.from("service_logos").upsert(
+        {
+          name: serviceName,
+          name_key: serviceKey,
+          logo_url: logoUrl,
+          created_by: userId,
+        },
+        { onConflict: "name_key", ignoreDuplicates: true },
+      );
+    }
     setForm(emptyDeal);
+    setLogo(null);
     setOpen(false);
     void load();
     toast.success("Deal geteilt.");
@@ -88,9 +133,7 @@ export function DealsPanel({ userId }: { userId: string }) {
     <div className="mx-auto w-full max-w-5xl px-4 pb-32 pt-2 sm:px-6">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
         <div className="min-w-0">
-          <h2 className="truncate font-display text-2xl font-bold tracking-tight">
-            Rabatte
-          </h2>
+          <h2 className="truncate font-display text-2xl font-bold tracking-tight">Rabatte</h2>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             Von Nutzern geteilte Codes und Angebote.
           </p>
@@ -175,16 +218,32 @@ export function DealsPanel({ userId }: { userId: string }) {
             <DialogTitle className="font-display text-lg">Deal teilen</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="deal-service">Dienst</Label>
-              <Input
-                id="deal-service"
-                placeholder="z. B. Adobe"
-                value={form.service_name}
-                onChange={(e) =>
-                  setForm({ ...form, service_name: e.target.value })
-                }
-              />
+            <div className="flex items-center gap-4">
+              <label className="grid h-14 w-14 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-2xl border border-dashed border-border bg-muted/40">
+                {logo ? (
+                  <img src={logo} alt="" className="h-full w-full object-contain p-1.5" />
+                ) : (
+                  <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void pickLogo(file);
+                  }}
+                />
+              </label>
+              <div className="min-w-0 flex-1">
+                <Label htmlFor="deal-service">Dienst</Label>
+                <Input
+                  id="deal-service"
+                  placeholder="z. B. Adobe"
+                  value={form.service_name}
+                  onChange={(e) => setForm({ ...form, service_name: e.target.value })}
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="deal-title">Angebot</Label>
@@ -202,9 +261,7 @@ export function DealsPanel({ userId }: { userId: string }) {
                 rows={3}
                 placeholder="Wie funktioniert der Deal? Bedingungen, Hinweise …"
                 value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -222,9 +279,7 @@ export function DealsPanel({ userId }: { userId: string }) {
                   id="deal-until"
                   type="date"
                   value={form.valid_until}
-                  onChange={(e) =>
-                    setForm({ ...form, valid_until: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, valid_until: e.target.value })}
                 />
               </div>
             </div>

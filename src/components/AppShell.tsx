@@ -17,15 +17,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings } from "lucide-react";
+import {
+  BadgePercent,
+  ChartNoAxesColumnIncreasing,
+  CircleDollarSign,
+  LogOut,
+  ReceiptText,
+  Settings,
+} from "lucide-react";
 import { CurrencyProvider } from "@/lib/currency";
 import { SettingsDialog } from "@/components/SettingsDialog";
 
 const TABS = [
-  { id: 0, label: "Ausgaben" },
-  { id: 1, label: "Einkommen" },
-  { id: 2, label: "Analyse" },
-  { id: 3, label: "Rabatte" },
+  { id: 0, label: "Ausgaben", Icon: ReceiptText },
+  { id: 1, label: "Einkommen", Icon: CircleDollarSign },
+  { id: 2, label: "Analyse", Icon: ChartNoAxesColumnIncreasing },
+  { id: 3, label: "Rabatte", Icon: BadgePercent },
 ] as const;
 
 export function AppShell({ user }: { user: User }) {
@@ -43,12 +50,9 @@ function AppShellInner({ user }: { user: User }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const syncing = useRef(false);
 
-  const avatar =
-    (user.user_metadata?.["avatar_url"] as string | undefined) ?? undefined;
+  const avatar = (user.user_metadata?.["avatar_url"] as string | undefined) ?? undefined;
   const fullName =
-    (user.user_metadata?.["full_name"] as string | undefined) ??
-    user.email ??
-    "Profil";
+    (user.user_metadata?.["full_name"] as string | undefined) ?? user.email ?? "Profil";
 
   async function loadSubs() {
     const { data } = await supabase
@@ -93,9 +97,9 @@ function AppShellInner({ user }: { user: User }) {
             <button
               type="button"
               aria-label="Profil"
-              className="shrink-0 rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+              className="liquid-glass shrink-0 rounded-full border p-0.5 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Avatar className="h-9 w-9 border border-border">
+              <Avatar className="h-8 w-8 border border-border/70">
                 <AvatarImage src={avatar} alt="" />
                 <AvatarFallback className="text-xs">
                   {fullName.slice(0, 2).toUpperCase()}
@@ -103,12 +107,10 @@ function AppShellInner({ user }: { user: User }) {
               </Avatar>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="liquid-glass w-56 rounded-3xl border p-2">
             <DropdownMenuLabel className="truncate font-normal">
               <span className="block truncate text-sm font-medium">{fullName}</span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {user.email}
-              </span>
+              <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => setSettingsOpen(true)}>
@@ -142,8 +144,8 @@ function AppShellInner({ user }: { user: User }) {
         </section>
       </div>
 
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-background/90 p-1 shadow-sm backdrop-blur">
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-3 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
+        <div className="liquid-tabbar pointer-events-auto grid h-[4.85rem] w-[min(94vw,34rem)] grid-cols-4 items-center gap-1 rounded-[2.35rem] border p-1.5">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -151,19 +153,26 @@ function AppShellInner({ user }: { user: User }) {
               onClick={() => goTo(t.id)}
               aria-current={tab === t.id}
               className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-[1.8rem] px-1 text-[11px] font-semibold leading-none transition-all duration-300 sm:text-xs",
                 tab === t.id
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "liquid-tab-active scale-[1.03] text-white"
+                  : "text-white/58 hover:text-white/86",
               )}
             >
+              <t.Icon
+                className={cn(
+                  "h-5 w-5 transition-all duration-300",
+                  tab === t.id ? "h-7 w-7" : "h-6 w-6",
+                )}
+                strokeWidth={tab === t.id ? 2.4 : 2.1}
+              />
               {t.label}
             </button>
           ))}
         </div>
       </nav>
 
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} userId={user.id} />
     </div>
   );
 }
