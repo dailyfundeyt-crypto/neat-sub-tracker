@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 const emptyDeal = {
   service_name: "",
   title: "",
+  description: "",
   code: "",
   url: "",
   valid_until: "",
@@ -57,6 +58,7 @@ export function DealsPanel({ userId }: { userId: string }) {
       service_name: form.service_name.trim(),
       logo_url: logoRow?.logo_url ?? null,
       title: form.title.trim(),
+      description: form.description.trim() || null,
       code: form.code.trim() || null,
       url: form.url.trim() || null,
       valid_until: form.valid_until || null,
