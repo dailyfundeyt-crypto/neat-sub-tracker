@@ -117,6 +117,9 @@ export function AppShell({ user }: { user: User }) {
           <SubscriptionsPanel subs={subs} userId={user.id} onChanged={loadSubs} />
         </section>
         <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
+          <IncomePanel userId={user.id} />
+        </section>
+        <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
           <AnalysisPanel subs={subs} />
         </section>
         <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
