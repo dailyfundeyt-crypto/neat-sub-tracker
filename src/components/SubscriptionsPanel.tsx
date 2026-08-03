@@ -105,7 +105,7 @@ export function SubscriptionsPanel({
     <div className="mx-auto w-full max-w-5xl px-4 pb-32 pt-2 sm:px-6">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
         <h2 className="truncate font-display text-2xl font-bold tracking-tight">
-          Meine Abos
+          Ausgaben
         </h2>
         <button
           type="button"

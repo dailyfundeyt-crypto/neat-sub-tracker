@@ -19,6 +19,7 @@ export type Database = {
           code: string | null
           created_at: string
           created_by: string
+          description: string | null
           id: string
           logo_url: string | null
           service_name: string
@@ -30,6 +31,7 @@ export type Database = {
           code?: string | null
           created_at?: string
           created_by: string
+          description?: string | null
           id?: string
           logo_url?: string | null
           service_name: string
@@ -41,12 +43,52 @@ export type Database = {
           code?: string | null
           created_at?: string
           created_by?: string
+          description?: string | null
           id?: string
           logo_url?: string | null
           service_name?: string
           title?: string
           url?: string | null
           valid_until?: string | null
+        }
+        Relationships: []
+      }
+      incomes: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          id: string
+          interval: string
+          name: string
+          next_payout: string | null
+          note: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          interval?: string
+          name: string
+          next_payout?: string | null
+          note?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          interval?: string
+          name?: string
+          next_payout?: string | null
+          note?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
