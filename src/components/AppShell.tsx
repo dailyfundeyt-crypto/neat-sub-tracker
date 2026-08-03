@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/Wordmark";
 import { SubscriptionsPanel } from "@/components/SubscriptionsPanel";
 import { AnalysisPanel } from "@/components/AnalysisPanel";
 import { DealsPanel } from "@/components/DealsPanel";
+import { IncomePanel } from "@/components/IncomePanel";
 import type { Subscription } from "@/lib/hyperlite";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,9 +20,10 @@ import {
 import { LogOut } from "lucide-react";
 
 const TABS = [
-  { id: 0, label: "Daten" },
-  { id: 1, label: "Analyse" },
-  { id: 2, label: "Rabatte" },
+  { id: 0, label: "Ausgaben" },
+  { id: 1, label: "Einkommen" },
+  { id: 2, label: "Analyse" },
+  { id: 3, label: "Rabatte" },
 ] as const;
 
 export function AppShell({ user }: { user: User }) {
