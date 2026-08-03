@@ -11,7 +11,8 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import { euro, monthlyCost, type Subscription } from "@/lib/hyperlite";
+import { monthlyCost, type Subscription } from "@/lib/hyperlite";
+import { useCurrency } from "@/lib/currency";
 
 const SHADES = [
   "#111111",
@@ -40,6 +41,7 @@ const MONTHS = [
 ];
 
 export function AnalysisPanel({ subs }: { subs: Subscription[] }) {
+  const { money } = useCurrency();
   const perMonth = useMemo(
     () => subs.reduce((sum, s) => sum + monthlyCost(s), 0),
     [subs],
@@ -94,7 +96,7 @@ export function AnalysisPanel({ subs }: { subs: Subscription[] }) {
             Pro Monat
           </p>
           <p className="mt-1 font-display text-2xl font-bold tabular-nums">
-            {euro.format(perMonth)}
+            {money(perMonth)}
           </p>
         </div>
         <div className="rounded-2xl border border-border p-4">
@@ -102,7 +104,7 @@ export function AnalysisPanel({ subs }: { subs: Subscription[] }) {
             Pro Jahr
           </p>
           <p className="mt-1 font-display text-2xl font-bold tabular-nums">
-            {euro.format(perMonth * 12)}
+            {money(perMonth * 12)}
           </p>
         </div>
       </div>
@@ -126,7 +128,7 @@ export function AnalysisPanel({ subs }: { subs: Subscription[] }) {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => euro.format(value)}
+                formatter={(value: number) => money(value)}
                 contentStyle={{
                   borderRadius: 12,
                   border: "1px solid var(--border)",
@@ -145,7 +147,7 @@ export function AnalysisPanel({ subs }: { subs: Subscription[] }) {
               />
               <span>{c.name}</span>
               <span className="tabular-nums text-muted-foreground">
-                {euro.format(c.value)}
+                {money(c.value)}
               </span>
             </li>
           ))}
@@ -167,7 +169,7 @@ export function AnalysisPanel({ subs }: { subs: Subscription[] }) {
               <YAxis tickLine={false} axisLine={false} fontSize={11} width={52} />
               <Tooltip
                 cursor={{ fill: "var(--muted)" }}
-                formatter={(value: number) => euro.format(value)}
+                formatter={(value: number) => money(value)}
                 contentStyle={{
                   borderRadius: 12,
                   border: "1px solid var(--border)",
