@@ -58,6 +58,7 @@ export type Database = {
           amount: number
           category: string
           created_at: string
+          group_name: string
           id: string
           interval: string
           name: string
@@ -70,6 +71,7 @@ export type Database = {
           amount?: number
           category?: string
           created_at?: string
+          group_name?: string
           id?: string
           interval?: string
           name: string
@@ -82,6 +84,7 @@ export type Database = {
           amount?: number
           category?: string
           created_at?: string
+          group_name?: string
           id?: string
           interval?: string
           name?: string
@@ -89,6 +92,30 @@ export type Database = {
           note?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          currency: string
+          expense_groups: string[]
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          expense_groups?: string[]
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          expense_groups?: string[]
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -126,6 +153,7 @@ export type Database = {
           category: string
           created_at: string
           credit: number
+          group_name: string
           id: string
           logo_url: string | null
           name: string
@@ -140,6 +168,7 @@ export type Database = {
           category?: string
           created_at?: string
           credit?: number
+          group_name?: string
           id?: string
           logo_url?: string | null
           name: string
@@ -154,6 +183,7 @@ export type Database = {
           category?: string
           created_at?: string
           credit?: number
+          group_name?: string
           id?: string
           logo_url?: string | null
           name?: string

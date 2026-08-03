@@ -7,6 +7,7 @@ import {
   type BillingInterval,
   type Subscription,
 } from "@/lib/hyperlite";
+import { useCurrency } from "@/lib/currency";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -37,6 +38,7 @@ type Props = {
 
 const empty = {
   name: "",
+  group_name: "Allgemein",
   category: "Software",
   price: "",
   billing_interval: "monthly" as BillingInterval,
@@ -52,6 +54,7 @@ export function SubscriptionDialog({
   editing,
   onSaved,
 }: Props) {
+  const { symbol, expenseGroups } = useCurrency();
   const [form, setForm] = useState(empty);
   const [logo, setLogo] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -61,6 +64,7 @@ export function SubscriptionDialog({
     if (editing) {
       setForm({
         name: editing.name,
+        group_name: editing.group_name || expenseGroups[0] || "Allgemein",
         category: editing.category,
         price: String(editing.price ?? ""),
         billing_interval: editing.billing_interval,
@@ -70,10 +74,10 @@ export function SubscriptionDialog({
       });
       setLogo(editing.logo_url);
     } else {
-      setForm(empty);
+      setForm({ ...empty, group_name: expenseGroups[0] ?? "Allgemein" });
       setLogo(null);
     }
-  }, [open, editing]);
+  }, [open, editing, expenseGroups]);
 
   // Logo aus der geteilten Bibliothek vorschlagen, sobald ein Name getippt wird.
   useEffect(() => {
@@ -112,6 +116,7 @@ export function SubscriptionDialog({
     const payload = {
       user_id: userId,
       name: form.name.trim(),
+      group_name: form.group_name,
       logo_url: logo,
       category: form.category,
       price: Number(form.price.replace(",", ".")) || 0,
@@ -208,6 +213,25 @@ export function SubscriptionDialog({
           </div>
 
           <div>
+            <Label>Gruppe</Label>
+            <Select
+              value={form.group_name}
+              onValueChange={(v) => setForm({ ...form, group_name: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {expenseGroups.map((g) => (
+                  <SelectItem key={g} value={g}>
+                    {g}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
             <Label>Kategorie</Label>
             <Select
               value={form.category}
@@ -228,7 +252,7 @@ export function SubscriptionDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="sub-price">Preis (€)</Label>
+              <Label htmlFor="sub-price">Preis ({symbol})</Label>
               <Input
                 id="sub-price"
                 inputMode="decimal"
@@ -280,7 +304,7 @@ export function SubscriptionDialog({
           </div>
 
           <div>
-            <Label htmlFor="sub-credit">Restguthaben (€)</Label>
+            <Label htmlFor="sub-credit">Restguthaben ({symbol})</Label>
             <Input
               id="sub-credit"
               inputMode="decimal"

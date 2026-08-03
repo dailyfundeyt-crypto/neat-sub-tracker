@@ -17,7 +17,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
+import { CurrencyProvider } from "@/lib/currency";
+import { SettingsDialog } from "@/components/SettingsDialog";
 
 const TABS = [
   { id: 0, label: "Ausgaben" },
@@ -27,6 +29,15 @@ const TABS = [
 ] as const;
 
 export function AppShell({ user }: { user: User }) {
+  return (
+    <CurrencyProvider userId={user.id}>
+      <AppShellInner user={user} />
+    </CurrencyProvider>
+  );
+}
+
+function AppShellInner({ user }: { user: User }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [subs, setSubs] = useState<Subscription[]>([]);
   const [tab, setTab] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -100,6 +111,10 @@ export function AppShell({ user }: { user: User }) {
               </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => setSettingsOpen(true)}>
+              <Settings className="mr-2 h-4 w-4" />
+              Einstellungen
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => void signOut()}>
               <LogOut className="mr-2 h-4 w-4" />
               Abmelden
@@ -147,6 +162,8 @@ export function AppShell({ user }: { user: User }) {
           ))}
         </div>
       </nav>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }

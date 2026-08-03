@@ -6,6 +6,7 @@ export type Subscription = {
   name: string;
   logo_url: string | null;
   category: string;
+  group_name: string;
   price: number;
   billing_interval: BillingInterval;
   next_payment: string | null;
@@ -32,12 +33,15 @@ export type Income = {
   user_id: string;
   name: string;
   category: string;
+  group_name: string;
   amount: number;
   interval: BillingInterval | "once";
   next_payout: string | null;
   note: string | null;
   created_at: string;
 };
+
+export const INCOME_GROUPS = ["Selbständig", "Arbeit"];
 
 export const INCOME_CATEGORIES = [
   "Freelance",

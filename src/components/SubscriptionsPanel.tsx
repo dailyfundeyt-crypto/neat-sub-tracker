@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import {
   daysUntil,
-  euro,
   formatDate,
   creditMonths,
   relativeLabel,
   urgencyScore,
   type Subscription,
 } from "@/lib/hyperlite";
+import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Plus, CalendarClock, Scissors } from "lucide-react";
 import { SubscriptionDialog } from "@/components/SubscriptionDialog";
@@ -39,9 +39,7 @@ function DueLabel({ date }: { date: string | null }) {
       <span
         className={cn(
           "rounded-full px-2 py-0.5 text-[11px] font-medium",
-          soon
-            ? "bg-warning text-warning-foreground"
-            : "text-muted-foreground",
+          soon ? "bg-warning text-warning-foreground" : "text-muted-foreground",
         )}
       >
         {relativeLabel(days)}
@@ -59,24 +57,41 @@ export function SubscriptionsPanel({
   userId: string;
   onChanged: () => void;
 }) {
+  const { money, expenseGroups } = useCurrency();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
 
-  const sorted = useMemo(
-    () => [...subs].sort((a, b) => urgencyScore(a) - urgencyScore(b)),
-    [subs],
-  );
+  const groups = useMemo(() => {
+    const names = [
+      ...expenseGroups,
+      ...subs
+        .map((s) => s.group_name || "Allgemein")
+        .filter((g) => !expenseGroups.includes(g)),
+    ];
+    return [...new Set(names)]
+      .map((name) => ({
+        name,
+        rows: subs
+          .filter((s) => (s.group_name || "Allgemein") === name)
+          .sort((a, b) => urgencyScore(a) - urgencyScore(b)),
+      }))
+      .filter((g) => g.rows.length > 0);
+  }, [subs, expenseGroups]);
 
   const upcoming = useMemo(() => {
-    const items: { key: string; icon: "pay" | "cancel"; text: string; days: number }[] =
-      [];
+    const items: {
+      key: string;
+      icon: "pay" | "cancel";
+      text: string;
+      days: number;
+    }[] = [];
     for (const s of subs) {
       const p = daysUntil(s.next_payment);
       if (p !== null && p >= 0 && p <= 7)
         items.push({
           key: `p-${s.id}`,
           icon: "pay",
-          text: `${s.name} · ${euro.format(s.price)} ${relativeLabel(p)}`,
+          text: `${s.name} · ${money(s.price)} ${relativeLabel(p)}`,
           days: p,
         });
       const c = daysUntil(s.cancel_by);
@@ -89,7 +104,7 @@ export function SubscriptionsPanel({
         });
     }
     return items.sort((a, b) => a.days - b.days);
-  }, [subs]);
+  }, [subs, money]);
 
   function openNew() {
     setEditing(null);
@@ -124,7 +139,8 @@ export function SubscriptionsPanel({
               key={u.key}
               className={cn(
                 "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs",
-                u.days <= 3 && "border-transparent bg-warning text-warning-foreground",
+                u.days <= 3 &&
+                  "border-transparent bg-warning text-warning-foreground",
               )}
             >
               {u.icon === "pay" ? (
@@ -138,130 +154,162 @@ export function SubscriptionsPanel({
         </div>
       )}
 
-      {sorted.length === 0 ? (
+      {subs.length === 0 ? (
         <div className="mt-16 text-center">
           <p className="text-sm text-muted-foreground">
             Noch keine Abos. Mit dem Plus oben legst du das erste an.
           </p>
         </div>
       ) : (
-        <>
-          {/* Desktop: Tabelle */}
-          <div className="mt-6 hidden overflow-hidden rounded-2xl border border-border md:block">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">Dienst</th>
-                  <th className="px-4 py-3 font-medium">Kategorie</th>
-                  <th className="px-4 py-3 font-medium">Preis</th>
-                  <th className="px-4 py-3 font-medium">Nächste Zahlung</th>
-                  <th className="px-4 py-3 font-medium">Kündigen bis</th>
-                  <th className="px-4 py-3 font-medium">Guthaben</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((s) => {
-                  const months = creditMonths(s);
-                  return (
-                    <tr
-                      key={s.id}
-                      onClick={() => openEdit(s)}
-                      className="cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-muted/50"
-                    >
-                      <td className="px-4 py-3">
-                        <span className="flex min-w-0 items-center gap-3">
-                          <LogoCell sub={s} />
-                          <span className="truncate font-medium">{s.name}</span>
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {s.category}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 tabular-nums">
-                        {euro.format(s.price)}
-                        <span className="text-muted-foreground">
-                          {s.billing_interval === "yearly" ? " / Jahr" : " / Monat"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <DueLabel date={s.next_payment} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <DueLabel date={s.cancel_by} />
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 tabular-nums">
-                        {s.credit > 0 ? (
-                          <>
-                            {euro.format(s.credit)}
-                            {months !== null && (
-                              <span className="text-muted-foreground">
-                                {" "}
-                                ≈ {months} Mon.
-                              </span>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <div className="mt-6 space-y-7">
+          {groups.map((g) => {
+            const total = g.rows.reduce(
+              (sum, s) =>
+                sum + (s.billing_interval === "yearly" ? s.price / 12 : s.price),
+              0,
+            );
+            return (
+              <section key={g.name}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {g.name}
+                  </h3>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {money(total)} / Monat
+                  </span>
+                </div>
 
-          {/* Mobil: kompakte Zeilenkarten */}
-          <ul className="mt-5 space-y-2 md:hidden">
-            {sorted.map((s) => {
-              const months = creditMonths(s);
-              return (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    onClick={() => openEdit(s)}
-                    className="w-full rounded-2xl border border-border p-3 text-left transition-colors active:bg-muted"
-                  >
-                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
-                      <LogoCell sub={s} />
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{s.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {s.category}
-                        </p>
-                      </div>
-                      <p className="shrink-0 text-right text-sm tabular-nums">
-                        {euro.format(s.price)}
-                        <span className="block text-[11px] text-muted-foreground">
-                          {s.billing_interval === "yearly" ? "pro Jahr" : "pro Monat"}
-                        </span>
-                      </p>
-                    </div>
-                    <div className="mt-3 space-y-1 text-xs">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-muted-foreground">Nächste Zahlung</span>
-                        <DueLabel date={s.next_payment} />
-                      </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-muted-foreground">Kündigen bis</span>
-                        <DueLabel date={s.cancel_by} />
-                      </div>
-                      {s.credit > 0 && (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-muted-foreground">Guthaben</span>
-                          <span className="tabular-nums">
-                            {euro.format(s.credit)}
-                            {months !== null && ` ≈ ${months} Mon.`}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </>
+                {/* Desktop: Tabelle */}
+                <div className="mt-2 hidden overflow-hidden rounded-2xl border border-border md:block">
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        <th className="px-4 py-3 font-medium">Dienst</th>
+                        <th className="px-4 py-3 font-medium">Kategorie</th>
+                        <th className="px-4 py-3 font-medium">Preis</th>
+                        <th className="px-4 py-3 font-medium">Nächste Zahlung</th>
+                        <th className="px-4 py-3 font-medium">Kündigen bis</th>
+                        <th className="px-4 py-3 font-medium">Guthaben</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {g.rows.map((s) => {
+                        const months = creditMonths(s);
+                        return (
+                          <tr
+                            key={s.id}
+                            onClick={() => openEdit(s)}
+                            className="cursor-pointer border-b border-border transition-colors last:border-0 hover:bg-muted/50"
+                          >
+                            <td className="px-4 py-3">
+                              <span className="flex min-w-0 items-center gap-3">
+                                <LogoCell sub={s} />
+                                <span className="truncate font-medium">
+                                  {s.name}
+                                </span>
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {s.category}
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3 tabular-nums">
+                              {money(s.price)}
+                              <span className="text-muted-foreground">
+                                {s.billing_interval === "yearly"
+                                  ? " / Jahr"
+                                  : " / Monat"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <DueLabel date={s.next_payment} />
+                            </td>
+                            <td className="px-4 py-3">
+                              <DueLabel date={s.cancel_by} />
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3 tabular-nums">
+                              {s.credit > 0 ? (
+                                <>
+                                  {money(s.credit)}
+                                  {months !== null && (
+                                    <span className="text-muted-foreground">
+                                      {" "}
+                                      ≈ {months} Mon.
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobil: kompakte Zeilenkarten */}
+                <ul className="mt-2 space-y-2 md:hidden">
+                  {g.rows.map((s) => {
+                    const months = creditMonths(s);
+                    return (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(s)}
+                          className="w-full rounded-2xl border border-border p-3 text-left transition-colors active:bg-muted"
+                        >
+                          <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+                            <LogoCell sub={s} />
+                            <div className="min-w-0">
+                              <p className="truncate font-medium">{s.name}</p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {s.category}
+                              </p>
+                            </div>
+                            <p className="shrink-0 text-right text-sm tabular-nums">
+                              {money(s.price)}
+                              <span className="block text-[11px] text-muted-foreground">
+                                {s.billing_interval === "yearly"
+                                  ? "pro Jahr"
+                                  : "pro Monat"}
+                              </span>
+                            </p>
+                          </div>
+                          <div className="mt-3 space-y-1 text-xs">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">
+                                Nächste Zahlung
+                              </span>
+                              <DueLabel date={s.next_payment} />
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">
+                                Kündigen bis
+                              </span>
+                              <DueLabel date={s.cancel_by} />
+                            </div>
+                            {s.credit > 0 && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-muted-foreground">
+                                  Guthaben
+                                </span>
+                                <span className="tabular-nums">
+                                  {money(s.credit)}
+                                  {months !== null && ` ≈ ${months} Mon.`}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
       )}
 
       <SubscriptionDialog
