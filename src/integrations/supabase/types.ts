@@ -95,6 +95,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_data_access: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          expose_analysis: boolean
+          expose_deals: boolean
+          expose_expenses: boolean
+          expose_income: boolean
+          token_hash: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          expose_analysis?: boolean
+          expose_deals?: boolean
+          expose_expenses?: boolean
+          expose_income?: boolean
+          token_hash?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          expose_analysis?: boolean
+          expose_deals?: boolean
+          expose_expenses?: boolean
+          expose_income?: boolean
+          token_hash?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mcp_connections: {
         Row: {
           created_at: string

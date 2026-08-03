@@ -144,8 +144,8 @@ function AppShellInner({ user }: { user: User }) {
         </section>
       </div>
 
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-3 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
-        <div className="liquid-tabbar pointer-events-auto grid h-[4.85rem] w-[min(94vw,34rem)] grid-cols-4 items-center gap-1 rounded-[2.35rem] border p-1.5">
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(92vw,28.5rem)] grid-cols-4 items-center gap-1 rounded-[2rem] border p-1">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -153,17 +153,12 @@ function AppShellInner({ user }: { user: User }) {
               onClick={() => goTo(t.id)}
               aria-current={tab === t.id}
               className={cn(
-                "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-[1.8rem] px-1 text-[11px] font-semibold leading-none transition-all duration-300 sm:text-xs",
-                tab === t.id
-                  ? "liquid-tab-active scale-[1.03] text-white"
-                  : "text-white/58 hover:text-white/86",
+                "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-[1.65rem] px-1 text-[10px] font-semibold leading-none transition-all duration-300 sm:text-[11px]",
+                tab === t.id ? "liquid-tab-active text-white" : "text-white/58 hover:text-white/86",
               )}
             >
               <t.Icon
-                className={cn(
-                  "h-5 w-5 transition-all duration-300",
-                  tab === t.id ? "h-7 w-7" : "h-6 w-6",
-                )}
+                className={cn("transition-all duration-300", tab === t.id ? "h-6 w-6" : "h-5 w-5")}
                 strokeWidth={tab === t.id ? 2.4 : 2.1}
               />
               {t.label}
