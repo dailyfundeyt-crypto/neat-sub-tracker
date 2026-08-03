@@ -46,93 +46,98 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="liquid-glass max-h-[92dvh] overflow-y-auto rounded-3xl border sm:max-w-lg">
+      <DialogContent className="liquid-glass max-h-[92dvh] overflow-y-auto rounded-3xl border sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-display text-lg">Einstellungen</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-3 gap-1 rounded-full border border-border/70 bg-background/35 p-1">
-          {settingsTabs.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setTab(item.id)}
-              className={cn(
-                "flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-xs font-medium transition-colors",
-                tab === item.id
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <item.Icon className="h-3.5 w-3.5" />
-              {item.label}
-            </button>
-          ))}
-        </div>
+        <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-4 sm:grid-cols-[11rem_minmax(0,1fr)]">
+          <nav className="space-y-1 border-r border-border/70 pr-2">
+            {settingsTabs.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setTab(item.id)}
+                aria-current={tab === item.id}
+                className={cn(
+                  "flex h-10 w-full items-center gap-2 rounded-xl px-2 text-left text-xs font-medium transition-colors sm:h-11 sm:px-3 sm:text-sm",
+                  tab === item.id
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                )}
+              >
+                <item.Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </button>
+            ))}
+          </nav>
 
-        {tab === "general" && (
-          <div className="space-y-5">
-            <div>
-              <Label>Währung</Label>
-              <Select value={currency} onValueChange={(value) => void setCurrency(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((item) => (
-                    <SelectItem key={item.code} value={item.code}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="min-w-0">
+            {tab === "general" && (
+              <div className="space-y-5">
+                <div>
+                  <Label>Währung</Label>
+                  <Select value={currency} onValueChange={(value) => void setCurrency(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((item) => (
+                        <SelectItem key={item.code} value={item.code}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label>Ausgaben-Gruppen</Label>
-              <ul className="mt-2 flex flex-wrap gap-2">
-                {expenseGroups.map((group) => (
-                  <li
-                    key={group}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border py-1 pl-3 pr-1.5 text-xs"
-                  >
-                    {group}
-                    <button
-                      type="button"
-                      aria-label={`${group} entfernen`}
-                      onClick={() =>
-                        void setExpenseGroups(expenseGroups.filter((item) => item !== group))
-                      }
-                      className="grid h-5 w-5 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-3 flex gap-2">
-                <Input
-                  placeholder="Neue Gruppe"
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      addGroup();
-                    }
-                  }}
-                />
-                <Button type="button" variant="outline" onClick={addGroup}>
-                  <Plus className="h-4 w-4" />
-                </Button>
+                <div>
+                  <Label>Ausgaben-Gruppen</Label>
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {expenseGroups.map((group) => (
+                      <li
+                        key={group}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border py-1 pl-3 pr-1.5 text-xs"
+                      >
+                        {group}
+                        <button
+                          type="button"
+                          aria-label={`${group} entfernen`}
+                          onClick={() =>
+                            void setExpenseGroups(expenseGroups.filter((item) => item !== group))
+                          }
+                          className="grid h-5 w-5 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-3 flex gap-2">
+                    <Input
+                      placeholder="Neue Gruppe"
+                      value={draft}
+                      onChange={(event) => setDraft(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          addGroup();
+                        }
+                      }}
+                    />
+                    <Button type="button" variant="outline" onClick={addGroup}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {tab === "mcp" && <McpConnectionsSection userId={userId} active={open} />}
+
+            {tab === "data" && <McpDataAccessSection userId={userId} active={open} />}
           </div>
-        )}
-
-        {tab === "mcp" && <McpConnectionsSection userId={userId} active={open} />}
-
-        {tab === "data" && <McpDataAccessSection userId={userId} active={open} />}
+        </div>
       </DialogContent>
     </Dialog>
   );

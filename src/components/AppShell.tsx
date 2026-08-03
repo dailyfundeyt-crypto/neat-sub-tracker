@@ -125,10 +125,32 @@ function AppShellInner({ user }: { user: User }) {
         </DropdownMenu>
       </header>
 
+      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:top-[57px] md:z-10 md:flex md:w-64 md:flex-col md:border-r md:border-white/10 md:bg-[#0f0f0f] md:px-3 md:py-4 md:text-white">
+        <nav className="space-y-1">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => goTo(t.id)}
+              aria-current={tab === t.id}
+              className={cn(
+                "flex h-12 w-full items-center gap-5 rounded-xl px-4 text-left text-sm font-semibold transition-colors",
+                tab === t.id
+                  ? "bg-white/14 text-white"
+                  : "text-white/78 hover:bg-white/10 hover:text-white",
+              )}
+            >
+              <t.Icon className="h-5 w-5 shrink-0" strokeWidth={2.1} />
+              <span className="truncate">{t.label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
+
       <div
         ref={trackRef}
         onScroll={onScroll}
-        className="flex flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden scroll-smooth [scrollbar-width:none] md:pl-64 [&::-webkit-scrollbar]:hidden"
       >
         <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
           <SubscriptionsPanel subs={subs} userId={user.id} onChanged={loadSubs} />
@@ -144,7 +166,7 @@ function AppShellInner({ user }: { user: User }) {
         </section>
       </div>
 
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
         <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(92vw,28.5rem)] grid-cols-4 items-center gap-1 rounded-[2rem] border p-1">
           {TABS.map((t) => (
             <button
