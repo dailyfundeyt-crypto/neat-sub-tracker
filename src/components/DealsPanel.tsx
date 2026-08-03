@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 const emptyDeal = {
   service_name: "",
@@ -130,6 +131,11 @@ export function DealsPanel({ userId }: { userId: string }) {
                 <p className="truncate text-sm font-medium">
                   {d.service_name} · {d.title}
                 </p>
+                {d.description && (
+                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                    {d.description}
+                  </p>
+                )}
                 <p className="truncate text-xs text-muted-foreground">
                   {d.code ? `Code ${d.code}` : "Ohne Code"}
                   {d.valid_until ? ` · bis ${formatDate(d.valid_until)}` : ""}
@@ -187,6 +193,18 @@ export function DealsPanel({ userId }: { userId: string }) {
                 placeholder="z. B. 40 % im ersten Jahr"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="deal-description">Beschreibung</Label>
+              <Textarea
+                id="deal-description"
+                rows={3}
+                placeholder="Wie funktioniert der Deal? Bedingungen, Hinweise …"
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
