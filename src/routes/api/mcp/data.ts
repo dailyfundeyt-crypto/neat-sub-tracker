@@ -105,7 +105,7 @@ async function getAccess(request: Request): Promise<DataAccess | null> {
   return data as DataAccess | null;
 }
 
-async function loadHyperliteData(access: DataAccess) {
+async function loadConnectData(access: DataAccess) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const payload: {
     expenses?: SubscriptionRow[];
@@ -180,7 +180,7 @@ export const Route = createFileRoute("/api/mcp/data")({
       GET: async () =>
         Response.json(
           {
-            name: "HyperLite Daten MCP",
+            name: "Connect Daten MCP",
             endpoint: "/api/mcp/data",
             auth: "Authorization: Bearer <token>",
             methods: ["initialize", "tools/list", "tools/call"],
@@ -199,7 +199,7 @@ export const Route = createFileRoute("/api/mcp/data")({
           return rpcResult(body.id, {
             protocolVersion: body.params?.protocolVersion ?? "2024-11-05",
             capabilities: { tools: {} },
-            serverInfo: { name: "HyperLite Daten MCP", version: "0.1.0" },
+            serverInfo: { name: "Connect Daten MCP", version: "0.1.0" },
           });
         }
 
@@ -210,14 +210,14 @@ export const Route = createFileRoute("/api/mcp/data")({
           return rpcResult(body.id, {
             tools: [
               {
-                name: "hyperlite.get_data",
+                name: "connect.get_data",
                 description:
-                  "Liest freigegebene HyperLite Ausgaben, Einkünfte, Rabatte und Analyse.",
+                  "Liest freigegebene Connect Ausgaben, Einkünfte, Rabatte und Analyse.",
                 inputSchema: { type: "object", properties: {} },
               },
               {
-                name: "hyperlite.get_summary",
-                description: "Liest eine kompakte HyperLite Monatsübersicht.",
+                name: "connect.get_summary",
+                description: "Liest eine kompakte Connect Monatsübersicht.",
                 inputSchema: { type: "object", properties: {} },
               },
             ],
@@ -226,9 +226,9 @@ export const Route = createFileRoute("/api/mcp/data")({
 
         if (body.method === "tools/call") {
           const toolName = body.params?.name;
-          const data = await loadHyperliteData(access);
+          const data = await loadConnectData(access);
           const result =
-            toolName === "hyperlite.get_summary" ? { analysis: data.analysis ?? null } : data;
+            toolName === "connect.get_summary" ? { analysis: data.analysis ?? null } : data;
           return rpcResult(body.id, {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
           });
