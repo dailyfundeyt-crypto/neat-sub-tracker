@@ -29,5 +29,6 @@ export default defineMcp({
     listEvents,
     createEvent,
     listDeals,
-  ],
+  ] as unknown as McpDefinitionInput["tools"],
+
 });
