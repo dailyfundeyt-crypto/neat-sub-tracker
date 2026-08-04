@@ -12,6 +12,11 @@ export type Subscription = {
   next_payment: string | null;
   cancel_by: string | null;
   credit: number;
+  discount_title: string | null;
+  discount_description: string | null;
+  discount_code: string | null;
+  discount_url: string | null;
+  discount_valid_until: string | null;
   created_at: string;
 };
 
@@ -113,11 +118,22 @@ export function creditMonths(sub: Subscription): number | null {
   return Math.floor(sub.credit / m);
 }
 
+export function hasDiscount(sub: Subscription): boolean {
+  return Boolean(
+    sub.discount_title ||
+      sub.discount_description ||
+      sub.discount_code ||
+      sub.discount_url ||
+      sub.discount_valid_until,
+  );
+}
+
 /** Sortierung: was am dringendsten ist, steht oben. */
 export function urgencyScore(sub: Subscription): number {
   const pay = daysUntil(sub.next_payment);
   const cancel = daysUntil(sub.cancel_by);
-  const values = [pay, cancel].filter(
+  const discount = hasDiscount(sub) ? daysUntil(sub.discount_valid_until) : null;
+  const values = [pay, cancel, discount].filter(
     (v): v is number => v !== null && v >= 0,
   );
   if (values.length === 0) return 9999;
