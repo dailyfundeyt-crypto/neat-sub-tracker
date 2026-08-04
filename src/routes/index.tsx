@@ -5,24 +5,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthScreen } from "@/components/AuthScreen";
 import { AppShell } from "@/components/AppShell";
 
+const appTitle = "Connect – Abos, Kosten und Kündigungen im Blick";
+const appDescription =
+  "Connect bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.";
+
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "HyperLite – Abos, Kosten und Kündigungen im Blick" },
+      { title: appTitle },
       {
         name: "description",
-        content:
-          "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.",
+        content: appDescription,
       },
-      { property: "og:title", content: "HyperLite – Abos, Kosten und Kündigungen im Blick" },
+      { property: "og:title", content: appTitle },
       {
         property: "og:description",
-        content:
-          "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.",
+        content: appDescription,
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Index,
