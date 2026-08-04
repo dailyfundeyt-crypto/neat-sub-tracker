@@ -49,7 +49,7 @@ export function AuthScreen() {
         <div className="flex justify-center">
           <Wordmark size={44} />
         </div>
-        <h1 className="sr-only">HyperLite – Abos im Blick</h1>
+        <h1 className="sr-only">Connect – Abos im Blick</h1>
         <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
           Alle Abos, Kosten und Kündigungsfristen an einem ruhigen Ort.
         </p>
