@@ -85,7 +85,11 @@ function emptyForm(): TrackerForm {
 }
 
 function parseEuro(value: string): number {
-  const parsed = Number(value.replace(/\s/g, "").replace(",", "."));
+  const compact = value.trim().replace(/\s/g, "");
+  const normalized = compact.includes(",")
+    ? compact.replace(/\./g, "").replace(",", ".")
+    : compact;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
@@ -356,6 +360,16 @@ export function HourlyRateTracker() {
     }
   }, [isOverLimit, metrics, session]);
 
+  useEffect(() => {
+    if (!session || !metrics || !isOverLimit || !session.warnedAt || reportOpen) return;
+
+    setReportForm((current) => ({
+      client: current.client || session.client,
+      reason: current.reason,
+    }));
+    setReportOpen(true);
+  }, [isOverLimit, metrics, reportOpen, session]);
+
   function patchForm(next: Partial<TrackerForm>) {
     setForm((current) => ({ ...current, ...next }));
   }
@@ -577,7 +591,7 @@ export function HourlyRateTracker() {
                 </div>
                 <div className="rounded-xl border border-border p-3">
                   <p className="text-[11px] font-semibold uppercase text-muted-foreground">
-                    Frei
+                    Erlaubt
                   </p>
                   <p className="mt-1 text-sm font-bold">{formatDuration(metrics.allowedMs)}</p>
                 </div>
@@ -607,7 +621,7 @@ export function HourlyRateTracker() {
                   id="rate-client"
                   value={form.client}
                   onChange={(event) => patchForm({ client: event.target.value })}
-                  placeholder="Optional beim Start"
+                  placeholder="Kunde / Unternehmen"
                 />
               </div>
 
