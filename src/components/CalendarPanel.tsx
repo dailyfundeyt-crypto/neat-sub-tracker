@@ -22,6 +22,7 @@ import {
   eventToForm,
   type EventForm,
 } from "@/components/EventDialog";
+import { HourlyRateTracker } from "@/components/HourlyRateTracker";
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const HOUR_HEIGHT = 72;
@@ -343,6 +344,7 @@ export function CalendarPanel({ userId }: { userId: string }) {
           >
             Heute
           </button>
+          <HourlyRateTracker />
           <button
             type="button"
             aria-label={notificationButtonLabel}
