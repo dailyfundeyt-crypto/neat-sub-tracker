@@ -124,25 +124,15 @@ type BookForm = {
   notes: string;
 };
 
-function createChannelForm(): ChannelForm {
-  return {
-    name: "",
-    url: "",
-    categoryId: DEFAULT_YOUTUBE_CATEGORY_ID,
-    dailyGoal: "2",
-  };
+function emptyChannelForm(): ChannelForm {
+  return { name: "", url: "", categoryId: DEFAULT_YOUTUBE_CATEGORY_ID, dailyGoal: "2" };
 }
 
-function createVideoForm(): VideoForm {
-  return {
-    title: "",
-    url: "",
-    durationMinutes: "20",
-    notes: "",
-  };
+function emptyVideoForm(): VideoForm {
+  return { title: "", url: "", durationMinutes: "20", notes: "" };
 }
 
-function createBookForm(): BookForm {
+function emptyBookForm(): BookForm {
   return {
     title: "",
     author: "",
@@ -158,9 +148,9 @@ export function LearningPanel({ userId }: { userId: string }) {
   const [state, setState] = useState<LearningState>(() => readLearningState(userId));
   const [mode, setMode] = useState<LearningMode>("youtube");
   const [selectedChannelId, setSelectedChannelId] = useState("");
-  const [channelForm, setChannelForm] = useState<ChannelForm>(() => createChannelForm());
-  const [videoForm, setVideoForm] = useState<VideoForm>(() => createVideoForm());
-  const [bookForm, setBookForm] = useState<BookForm>(() => createBookForm());
+  const [channelForm, setChannelForm] = useState<ChannelForm>(() => emptyChannelForm());
+  const [videoForm, setVideoForm] = useState<VideoForm>(() => emptyVideoForm());
+  const [bookForm, setBookForm] = useState<BookForm>(() => emptyBookForm());
   const [categoryDraft, setCategoryDraft] = useState("");
   const [connectorsOpen, setConnectorsOpen] = useState(false);
   const [connectorForm, setConnectorForm] = useState<LearningConnectors>(() => state.connectors);
@@ -188,13 +178,10 @@ export function LearningPanel({ userId }: { userId: string }) {
     setConnectorForm(state.connectors);
   }, [state.connectors]);
 
-  const categoryById = useMemo(() => {
-    return new Map(state.categories.map((category) => [category.id, category]));
-  }, [state.categories]);
+  const categoryById = useMemo(() => new Map(state.categories.map((category) => [category.id, category])), [state.categories]);
 
   const activeChannel = useMemo(() => {
-    const selected = state.channels.find((channel) => channel.id === selectedChannelId);
-    return selected ?? state.channels[0] ?? null;
+    return state.channels.find((channel) => channel.id === selectedChannelId) ?? state.channels[0] ?? null;
   }, [selectedChannelId, state.channels]);
 
   const visibleVideos = useMemo(() => {
@@ -205,24 +192,19 @@ export function LearningPanel({ userId }: { userId: string }) {
       .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
   }, [activeChannel?.id, state.minimumVideoMinutes, state.videos]);
 
-  const openVideos = useMemo(() => {
-    return visibleVideos.filter((video) => video.status === "todo");
-  }, [visibleVideos]);
-
-  const savedVideos = useMemo(() => {
-    return state.videos.filter((video) => video.status === "saved");
-  }, [state.videos]);
-
-  const watchedToday = useMemo(() => {
-    return state.videos.filter((video) => video.status === "watched" && isToday(video.watchedAt));
-  }, [state.videos]);
+  const openVideos = useMemo(() => visibleVideos.filter((video) => video.status === "todo"), [visibleVideos]);
+  const savedVideoCount = useMemo(() => state.videos.filter((video) => video.status === "saved").length, [state.videos]);
+  const watchedToday = useMemo(() => state.videos.filter((video) => video.status === "watched" && isToday(video.watchedAt)), [state.videos]);
+  const pagesRead = useMemo(() => state.books.reduce((sum, book) => sum + book.currentPage, 0), [state.books]);
+  const booksInProgress = useMemo(() => state.books.filter((book) => book.status === "reading").length, [state.books]);
+  const totalLearningMinutes = useMemo(
+    () => state.videos.reduce((sum, video) => (video.status === "watched" ? sum + video.durationMinutes : sum), 0),
+    [state.videos],
+  );
 
   const channelStats = useMemo(() => {
     const stats = new Map<string, { open: number; saved: number; watched: number; minutes: number }>();
-
-    for (const channel of state.channels) {
-      stats.set(channel.id, { open: 0, saved: 0, watched: 0, minutes: 0 });
-    }
+    for (const channel of state.channels) stats.set(channel.id, { open: 0, saved: 0, watched: 0, minutes: 0 });
 
     for (const video of state.videos) {
       const current = stats.get(video.channelId) ?? { open: 0, saved: 0, watched: 0, minutes: 0 };
@@ -240,39 +222,15 @@ export function LearningPanel({ userId }: { userId: string }) {
     return stats;
   }, [state.channels, state.videos]);
 
-  const totalLearningMinutes = useMemo(() => {
-    return state.videos.reduce(
-      (sum, video) => (video.status === "watched" ? sum + video.durationMinutes : sum),
-      0,
-    );
-  }, [state.videos]);
-
-  const pagesRead = useMemo(() => {
-    return state.books.reduce((sum, book) => sum + book.currentPage, 0);
-  }, [state.books]);
-
-  const booksInProgress = useMemo(() => {
-    return state.books.filter((book) => book.status === "reading").length;
-  }, [state.books]);
-
   const categoryStats = useMemo(() => {
     return state.categories.map((category) => {
       const videoMinutes = state.videos.reduce(
-        (sum, video) =>
-          video.categoryId === category.id && video.status === "watched"
-            ? sum + video.durationMinutes
-            : sum,
+        (sum, video) => (video.categoryId === category.id && video.status === "watched" ? sum + video.durationMinutes : sum),
         0,
       );
-      const openVideoCount = state.videos.filter(
-        (video) => video.categoryId === category.id && video.status === "todo",
-      ).length;
-      const pageCount = state.books.reduce(
-        (sum, book) => (book.categoryId === category.id ? sum + book.currentPage : sum),
-        0,
-      );
+      const openVideoCount = state.videos.filter((video) => video.categoryId === category.id && video.status === "todo").length;
+      const pageCount = state.books.reduce((sum, book) => (book.categoryId === category.id ? sum + book.currentPage : sum), 0);
       const bookCount = state.books.filter((book) => book.categoryId === category.id).length;
-
       return { category, videoMinutes, openVideoCount, pageCount, bookCount };
     });
   }, [state.books, state.categories, state.videos]);
@@ -291,19 +249,16 @@ export function LearningPanel({ userId }: { userId: string }) {
   function addCategory() {
     const name = categoryDraft.trim();
     if (!name) return;
-    const exists = state.categories.some((category) => category.name.toLowerCase() === name.toLowerCase());
-    if (exists) {
+    if (state.categories.some((category) => category.name.toLowerCase() === name.toLowerCase())) {
       toast.error("Diese Kategorie gibt es bereits.");
       return;
     }
 
-    const color = categoryColors[state.categories.length % categoryColors.length] ?? "bg-foreground";
     const category: LearningCategory = {
       id: uid("category"),
       name,
-      color,
+      color: categoryColors[state.categories.length % categoryColors.length] ?? "bg-foreground",
     };
-
     mutate((current) => ({ ...current, categories: [...current.categories, category] }));
     setCategoryDraft("");
     toast.success("Kategorie angelegt.");
@@ -321,13 +276,13 @@ export function LearningPanel({ userId }: { userId: string }) {
       name,
       url: channelForm.url.trim(),
       categoryId: channelForm.categoryId || DEFAULT_YOUTUBE_CATEGORY_ID,
-      dailyGoal: parsePositiveInt(channelForm.dailyGoal, 1),
+      dailyGoal: Math.max(1, parsePositiveInt(channelForm.dailyGoal, 1)),
       createdAt: new Date().toISOString(),
     };
 
     mutate((current) => ({ ...current, channels: [...current.channels, channel] }));
     setSelectedChannelId(channel.id);
-    setChannelForm(createChannelForm());
+    setChannelForm(emptyChannelForm());
     toast.success("Kanal hinzugefuegt.");
   }
 
@@ -367,7 +322,7 @@ export function LearningPanel({ userId }: { userId: string }) {
     };
 
     mutate((current) => ({ ...current, videos: [...current.videos, video] }));
-    setVideoForm(createVideoForm());
+    setVideoForm(emptyVideoForm());
     toast.success("Video in den Lernplan gelegt.");
   }
 
@@ -377,21 +332,14 @@ export function LearningPanel({ userId }: { userId: string }) {
       ...current,
       videos: current.videos.map((video) =>
         video.id === videoId
-          ? {
-              ...video,
-              status,
-              watchedAt: status === "watched" ? video.watchedAt || now : "",
-            }
+          ? { ...video, status, watchedAt: status === "watched" ? video.watchedAt || now : "" }
           : video,
       ),
     }));
   }
 
   function deleteVideo(videoId: string) {
-    mutate((current) => ({
-      ...current,
-      videos: current.videos.filter((video) => video.id !== videoId),
-    }));
+    mutate((current) => ({ ...current, videos: current.videos.filter((video) => video.id !== videoId) }));
   }
 
   async function copyNextVideos() {
@@ -401,24 +349,20 @@ export function LearningPanel({ userId }: { userId: string }) {
       return;
     }
 
-    const links = nextVideos.map((video) => video.url || video.title).join("\n");
-    const copied = await copyText(links);
+    const copied = await copyText(nextVideos.map((video) => video.url || video.title).join("\n"));
     if (!copied) return;
 
     const ids = new Set(nextVideos.map((video) => video.id));
     const now = new Date().toISOString();
     mutate((current) => ({
       ...current,
-      videos: current.videos.map((video) =>
-        ids.has(video.id) ? { ...video, status: "watched", watchedAt: now } : video,
-      ),
+      videos: current.videos.map((video) => (ids.has(video.id) ? { ...video, status: "watched", watchedAt: now } : video)),
     }));
     toast.success(`${nextVideos.length} Links kopiert und als gesehen markiert.`);
   }
 
   async function copyCoachPrompt(video?: LearningVideo) {
-    const value = video ? `${coachPrompt}\n${video.title}\n${video.url}` : coachPrompt;
-    const copied = await copyText(value);
+    const copied = await copyText(video ? `${coachPrompt}\n${video.title}\n${video.url}` : coachPrompt);
     if (copied) toast.success("Coach-Prompt kopiert.");
   }
 
@@ -446,7 +390,7 @@ export function LearningPanel({ userId }: { userId: string }) {
       categoryId: bookForm.categoryId || DEFAULT_BOOK_CATEGORY_ID,
       totalPages: parsePositiveInt(bookForm.totalPages, 0),
       currentPage: 0,
-      dailyGoal: parsePositiveInt(bookForm.dailyGoal, 10),
+      dailyGoal: Math.max(1, parsePositiveInt(bookForm.dailyGoal, 10)),
       notes: bookForm.notes.trim(),
       status: "reading",
       createdAt: now,
@@ -454,20 +398,20 @@ export function LearningPanel({ userId }: { userId: string }) {
     };
 
     mutate((current) => ({ ...current, books: [...current.books, book] }));
-    setBookForm(createBookForm());
+    setBookForm(emptyBookForm());
     toast.success("Buch in die Bibliothek gelegt.");
   }
 
-  function updateBookProgress(bookId: string, currentPage: number) {
+  function updateBookProgress(bookId: string, page: number) {
     mutate((current) => ({
       ...current,
       books: current.books.map((book) => {
         if (book.id !== bookId) return book;
-        const nextPage = clamp(currentPage, 0, book.totalPages || Number.MAX_SAFE_INTEGER);
-        const done = book.totalPages > 0 && nextPage >= book.totalPages;
+        const currentPage = clamp(page, 0, book.totalPages || Number.MAX_SAFE_INTEGER);
+        const done = book.totalPages > 0 && currentPage >= book.totalPages;
         return {
           ...book,
-          currentPage: nextPage,
+          currentPage,
           status: done ? "done" : book.status === "done" ? "reading" : book.status,
           updatedAt: new Date().toISOString(),
         };
@@ -478,18 +422,13 @@ export function LearningPanel({ userId }: { userId: string }) {
   function setBookStatus(bookId: string, status: BookStatus) {
     mutate((current) => ({
       ...current,
-      books: current.books.map((book) =>
-        book.id === bookId ? { ...book, status, updatedAt: new Date().toISOString() } : book,
-      ),
+      books: current.books.map((book) => (book.id === bookId ? { ...book, status, updatedAt: new Date().toISOString() } : book)),
     }));
   }
 
   function deleteBook(bookId: string) {
     if (!confirmDanger("Buch und Notizen entfernen?")) return;
-    mutate((current) => ({
-      ...current,
-      books: current.books.filter((book) => book.id !== bookId),
-    }));
+    mutate((current) => ({ ...current, books: current.books.filter((book) => book.id !== bookId) }));
   }
 
   function saveConnectors() {
@@ -498,11 +437,8 @@ export function LearningPanel({ userId }: { userId: string }) {
     toast.success("Lern-Connectoren gespeichert.");
   }
 
-  function saveMinimumVideoMinutes(value: string) {
-    mutate((current) => ({
-      ...current,
-      minimumVideoMinutes: parsePositiveInt(value, 0),
-    }));
+  function setMinimumVideoMinutes(value: string) {
+    mutate((current) => ({ ...current, minimumVideoMinutes: parsePositiveInt(value, 0) }));
   }
 
   function sendBookToKindle(book: LearningBook) {
@@ -519,14 +455,11 @@ export function LearningPanel({ userId }: { userId: string }) {
   }
 
   function exportBook(book: LearningBook) {
-    const filename = `${sanitizeFileName(book.title)}-${localDayKey(new Date())}.md`;
-    downloadMarkdown(filename, createBookMarkdown(book, categoryById.get(book.categoryId)));
+    downloadMarkdown(`${sanitizeFileName(book.title)}-${localDayKey(new Date())}.md`, createBookMarkdown(book, categoryById.get(book.categoryId)));
   }
 
   function exportLearningArchive() {
-    const date = localDayKey(new Date());
-    const content = createLearningArchiveMarkdown(state, categoryById);
-    downloadMarkdown(`connect-lernen-${date}.md`, content);
+    downloadMarkdown(`connect-lernen-${localDayKey(new Date())}.md`, createLearningArchiveMarkdown(state, categoryById));
   }
 
   return (
@@ -538,9 +471,7 @@ export function LearningPanel({ userId }: { userId: string }) {
               <GraduationCap className="h-4 w-4" />
               Lernen
             </div>
-            <h1 className="mt-2 font-display text-2xl font-semibold tracking-normal sm:text-3xl">
-              Videos und Buecher als Lernsystem
-            </h1>
+            <h1 className="mt-2 font-display text-2xl font-semibold tracking-normal sm:text-3xl">Videos und Buecher als Lernsystem</h1>
             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
               Kuratiere YouTube-Kanaele, lies Buecher weiter und exportiere aus Notizen direkte Markdown-Lerneinheiten.
             </p>
@@ -556,9 +487,7 @@ export function LearningPanel({ userId }: { userId: string }) {
                   aria-pressed={mode === item.id}
                   className={cn(
                     "flex h-10 min-w-0 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold transition-colors sm:text-sm",
-                    mode === item.id
-                      ? "bg-foreground text-background shadow-sm"
-                      : "text-muted-foreground hover:bg-background/80 hover:text-foreground",
+                    mode === item.id ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:bg-background/80 hover:text-foreground",
                   )}
                 >
                   <item.Icon className="h-4 w-4 shrink-0" />
@@ -575,7 +504,7 @@ export function LearningPanel({ userId }: { userId: string }) {
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Metric icon={Youtube} label="Heute gesehen" value={`${watchedToday.length} Videos`} detail={durationLabel(watchedToday.reduce((sum, video) => sum + video.durationMinutes, 0))} />
-          <Metric icon={Target} label="Offene Lernvideos" value={`${openVideos.length}`} detail={`${savedVideos.length} in der Merkliste`} />
+          <Metric icon={Target} label="Offene Lernvideos" value={`${openVideos.length}`} detail={`${savedVideoCount} in der Merkliste`} />
           <Metric icon={BookOpen} label="Lesefortschritt" value={`${pagesRead} Seiten`} detail={`${booksInProgress} aktive Buecher`} />
           <Metric icon={Clock3} label="Gesamte Lernzeit" value={durationLabel(totalLearningMinutes)} detail="aus markierten Videos" />
         </div>
@@ -583,53 +512,13 @@ export function LearningPanel({ userId }: { userId: string }) {
         {mode === "youtube" && (
           <div className="grid gap-5 xl:grid-cols-[23rem_minmax(0,1fr)]">
             <section className="rounded-3xl border border-border/70 bg-card/65 p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold">Kanaele und Playlists</h2>
-                  <p className="text-sm text-muted-foreground">Aus FocusTube uebernommen: bewusst kuratieren statt Feed scrollen.</p>
-                </div>
-                <Youtube className="h-5 w-5 text-muted-foreground" />
-              </div>
-
+              <SectionTitle icon={Youtube} title="Kanaele und Playlists" body="Fokus-Liste statt Feed. Jeder Kanal bekommt Kategorie und Tagesziel." />
               <div className="mt-4 space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="learning-channel-name">Name</Label>
-                  <Input
-                    id="learning-channel-name"
-                    placeholder="z. B. Marktstruktur"
-                    value={channelForm.name}
-                    onChange={(event) => setChannelForm((current) => ({ ...current, name: event.currentTarget.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="learning-channel-url">URL oder Handle</Label>
-                  <Input
-                    id="learning-channel-url"
-                    placeholder="youtube.com/@kanal"
-                    value={channelForm.url}
-                    onChange={(event) => setChannelForm((current) => ({ ...current, url: event.currentTarget.value }))}
-                  />
-                </div>
+                <TextField id="learning-channel-name" label="Name" value={channelForm.name} placeholder="z. B. Marktstruktur" onChange={(value) => setChannelForm((current) => ({ ...current, name: value }))} />
+                <TextField id="learning-channel-url" label="URL oder Handle" value={channelForm.url} placeholder="youtube.com/@kanal" onChange={(value) => setChannelForm((current) => ({ ...current, url: value }))} />
                 <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="learning-channel-category">Kategorie</Label>
-                    <CategorySelect
-                      id="learning-channel-category"
-                      value={channelForm.categoryId}
-                      categories={state.categories}
-                      onChange={(categoryId) => setChannelForm((current) => ({ ...current, categoryId }))}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="learning-channel-goal">Ziel/Tag</Label>
-                    <Input
-                      id="learning-channel-goal"
-                      type="number"
-                      min="1"
-                      value={channelForm.dailyGoal}
-                      onChange={(event) => setChannelForm((current) => ({ ...current, dailyGoal: event.currentTarget.value }))}
-                    />
-                  </div>
+                  <SelectField id="learning-channel-category" label="Kategorie" value={channelForm.categoryId} categories={state.categories} onChange={(categoryId) => setChannelForm((current) => ({ ...current, categoryId }))} />
+                  <TextField id="learning-channel-goal" label="Ziel/Tag" type="number" value={channelForm.dailyGoal} onChange={(value) => setChannelForm((current) => ({ ...current, dailyGoal: value }))} />
                 </div>
                 <Button type="button" className="w-full" onClick={addChannel}>
                   <Plus className="h-4 w-4" />
@@ -641,50 +530,17 @@ export function LearningPanel({ userId }: { userId: string }) {
                 {state.channels.length === 0 ? (
                   <EmptyState icon={Youtube} title="Noch keine Kanaele" body="Fuege einen Kanal oder eine Playlist hinzu und lege danach konkrete Lernvideos ab." />
                 ) : (
-                  state.channels.map((channel) => {
-                    const stats = channelStats.get(channel.id) ?? { open: 0, saved: 0, watched: 0, minutes: 0 };
-                    const category = categoryById.get(channel.categoryId);
-                    return (
-                      <button
-                        key={channel.id}
-                        type="button"
-                        onClick={() => setSelectedChannelId(channel.id)}
-                        aria-current={activeChannel?.id === channel.id}
-                        className={cn(
-                          "group w-full rounded-2xl border p-3 text-left transition-colors",
-                          activeChannel?.id === channel.id
-                            ? "border-foreground bg-foreground text-background"
-                            : "border-border/70 bg-background/70 hover:border-foreground/40",
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <CategoryDot category={category} />
-                              <span className="truncate text-sm font-semibold">{channel.name}</span>
-                            </div>
-                            <p className={cn("mt-1 text-xs", activeChannel?.id === channel.id ? "text-background/72" : "text-muted-foreground")}>
-                              {stats.open} offen | {stats.watched}/{channel.dailyGoal} Tagesziel
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            aria-label={`${channel.name} entfernen`}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              deleteChannel(channel.id);
-                            }}
-                            className={cn(
-                              "grid h-8 w-8 shrink-0 place-items-center rounded-full opacity-70 transition-opacity hover:opacity-100",
-                              activeChannel?.id === channel.id ? "hover:bg-background/15" : "hover:bg-muted",
-                            )}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </button>
-                    );
-                  })
+                  state.channels.map((channel) => (
+                    <ChannelRow
+                      key={channel.id}
+                      channel={channel}
+                      category={categoryById.get(channel.categoryId)}
+                      active={activeChannel?.id === channel.id}
+                      stats={channelStats.get(channel.id) ?? { open: 0, saved: 0, watched: 0, minutes: 0 }}
+                      onSelect={() => setSelectedChannelId(channel.id)}
+                      onDelete={() => deleteChannel(channel.id)}
+                    />
+                  ))
                 )}
               </div>
             </section>
@@ -693,9 +549,7 @@ export function LearningPanel({ userId }: { userId: string }) {
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
                   <h2 className="truncate text-lg font-semibold">{activeChannel?.name ?? "Lernvideos"}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Shorts-Filter ab {state.minimumVideoMinutes} Minuten. Aelteste Aufgaben bleiben oben.
-                  </p>
+                  <p className="text-sm text-muted-foreground">Shorts-Filter ab {state.minimumVideoMinutes} Minuten. Aelteste Aufgaben bleiben oben.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" variant="outline" size="sm" onClick={() => void copyCoachPrompt()}>
@@ -710,46 +564,11 @@ export function LearningPanel({ userId }: { userId: string }) {
               </div>
 
               <div className="mt-4 grid gap-3 rounded-2xl border border-border/70 bg-background/70 p-3 lg:grid-cols-[minmax(0,1fr)_8rem_8rem]">
-                <div className="space-y-1.5">
-                  <Label htmlFor="learning-video-title">Video</Label>
-                  <Input
-                    id="learning-video-title"
-                    placeholder="Titel des naechsten Lernvideos"
-                    value={videoForm.title}
-                    onChange={(event) => setVideoForm((current) => ({ ...current, title: event.currentTarget.value }))}
-                    disabled={!activeChannel}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="learning-video-duration">Minuten</Label>
-                  <Input
-                    id="learning-video-duration"
-                    type="number"
-                    min="0"
-                    value={videoForm.durationMinutes}
-                    onChange={(event) => setVideoForm((current) => ({ ...current, durationMinutes: event.currentTarget.value }))}
-                    disabled={!activeChannel}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="learning-min-filter">Filter</Label>
-                  <Input
-                    id="learning-min-filter"
-                    type="number"
-                    min="0"
-                    value={state.minimumVideoMinutes}
-                    onChange={(event) => saveMinimumVideoMinutes(event.currentTarget.value)}
-                  />
-                </div>
-                <div className="space-y-1.5 lg:col-span-2">
-                  <Label htmlFor="learning-video-url">URL</Label>
-                  <Input
-                    id="learning-video-url"
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    value={videoForm.url}
-                    onChange={(event) => setVideoForm((current) => ({ ...current, url: event.currentTarget.value }))}
-                    disabled={!activeChannel}
-                  />
+                <TextField id="learning-video-title" label="Video" value={videoForm.title} placeholder="Titel des naechsten Lernvideos" disabled={!activeChannel} onChange={(value) => setVideoForm((current) => ({ ...current, title: value }))} />
+                <TextField id="learning-video-duration" label="Minuten" type="number" value={videoForm.durationMinutes} disabled={!activeChannel} onChange={(value) => setVideoForm((current) => ({ ...current, durationMinutes: value }))} />
+                <TextField id="learning-min-filter" label="Filter" type="number" value={`${state.minimumVideoMinutes}`} onChange={setMinimumVideoMinutes} />
+                <div className="lg:col-span-2">
+                  <TextField id="learning-video-url" label="URL" value={videoForm.url} placeholder="https://www.youtube.com/watch?v=..." disabled={!activeChannel} onChange={(value) => setVideoForm((current) => ({ ...current, url: value }))} />
                 </div>
                 <div className="flex items-end">
                   <Button type="button" className="w-full" onClick={addVideo} disabled={!activeChannel}>
@@ -759,13 +578,7 @@ export function LearningPanel({ userId }: { userId: string }) {
                 </div>
                 <div className="space-y-1.5 lg:col-span-3">
                   <Label htmlFor="learning-video-notes">Notiz fuer die Analyse</Label>
-                  <Textarea
-                    id="learning-video-notes"
-                    placeholder="Warum ist dieses Video relevant? Was soll der Coach daraus ziehen?"
-                    value={videoForm.notes}
-                    onChange={(event) => setVideoForm((current) => ({ ...current, notes: event.currentTarget.value }))}
-                    disabled={!activeChannel}
-                  />
+                  <Textarea id="learning-video-notes" value={videoForm.notes} placeholder="Warum ist dieses Video relevant?" disabled={!activeChannel} onChange={(event) => setVideoForm((current) => ({ ...current, notes: event.currentTarget.value }))} />
                 </div>
               </div>
 
@@ -796,88 +609,29 @@ export function LearningPanel({ userId }: { userId: string }) {
         {mode === "books" && (
           <div className="grid gap-5 xl:grid-cols-[24rem_minmax(0,1fr)]">
             <section className="rounded-3xl border border-border/70 bg-card/65 p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold">Bibliothek</h2>
-                  <p className="text-sm text-muted-foreground">Aus Bockreader uebernommen: Fortschritt, Quelle, Notizen und Markdown-Lerneinheiten.</p>
-                </div>
-                <BookOpen className="h-5 w-5 text-muted-foreground" />
-              </div>
-
+              <SectionTitle icon={BookOpen} title="Bibliothek" body="Fortschritt, Quelle, Notizen und Markdown-Lerneinheiten." />
               <div className="mt-4 space-y-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="learning-book-title">Titel</Label>
-                  <Input
-                    id="learning-book-title"
-                    placeholder="Buchtitel"
-                    value={bookForm.title}
-                    onChange={(event) => setBookForm((current) => ({ ...current, title: event.currentTarget.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="learning-book-author">Autor</Label>
-                  <Input
-                    id="learning-book-author"
-                    placeholder="Autor oder Herausgeber"
-                    value={bookForm.author}
-                    onChange={(event) => setBookForm((current) => ({ ...current, author: event.currentTarget.value }))}
-                  />
-                </div>
+                <TextField id="learning-book-title" label="Titel" value={bookForm.title} placeholder="Buchtitel" onChange={(value) => setBookForm((current) => ({ ...current, title: value }))} />
+                <TextField id="learning-book-author" label="Autor" value={bookForm.author} placeholder="Autor oder Herausgeber" onChange={(value) => setBookForm((current) => ({ ...current, author: value }))} />
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="learning-book-source">Quelle</Label>
-                    <select
-                      id="learning-book-source"
-                      value={bookForm.source}
-                      onChange={(event) => setBookForm((current) => ({ ...current, source: event.currentTarget.value as BookSource }))}
-                      className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring"
-                    >
+                    <select id="learning-book-source" value={bookForm.source} onChange={(event) => setBookForm((current) => ({ ...current, source: event.currentTarget.value as BookSource }))} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
                       <option value="kindle">Amazon Kindle</option>
                       <option value="pdf">PDF</option>
                       <option value="epub">EPUB</option>
                       <option value="manual">Manuell</option>
                     </select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="learning-book-category">Kategorie</Label>
-                    <CategorySelect
-                      id="learning-book-category"
-                      value={bookForm.categoryId}
-                      categories={state.categories}
-                      onChange={(categoryId) => setBookForm((current) => ({ ...current, categoryId }))}
-                    />
-                  </div>
+                  <SelectField id="learning-book-category" label="Kategorie" value={bookForm.categoryId} categories={state.categories} onChange={(categoryId) => setBookForm((current) => ({ ...current, categoryId }))} />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="learning-book-pages">Seiten</Label>
-                    <Input
-                      id="learning-book-pages"
-                      type="number"
-                      min="0"
-                      value={bookForm.totalPages}
-                      onChange={(event) => setBookForm((current) => ({ ...current, totalPages: event.currentTarget.value }))}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="learning-book-goal">Ziel/Tag</Label>
-                    <Input
-                      id="learning-book-goal"
-                      type="number"
-                      min="1"
-                      value={bookForm.dailyGoal}
-                      onChange={(event) => setBookForm((current) => ({ ...current, dailyGoal: event.currentTarget.value }))}
-                    />
-                  </div>
+                  <TextField id="learning-book-pages" label="Seiten" type="number" value={bookForm.totalPages} onChange={(value) => setBookForm((current) => ({ ...current, totalPages: value }))} />
+                  <TextField id="learning-book-goal" label="Ziel/Tag" type="number" value={bookForm.dailyGoal} onChange={(value) => setBookForm((current) => ({ ...current, dailyGoal: value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="learning-book-notes">Startnotiz</Label>
-                  <Textarea
-                    id="learning-book-notes"
-                    placeholder="Warum lesen? Welche Fragen soll das Buch beantworten?"
-                    value={bookForm.notes}
-                    onChange={(event) => setBookForm((current) => ({ ...current, notes: event.currentTarget.value }))}
-                  />
+                  <Textarea id="learning-book-notes" value={bookForm.notes} placeholder="Warum lesen? Welche Fragen soll das Buch beantworten?" onChange={(event) => setBookForm((current) => ({ ...current, notes: event.currentTarget.value }))} />
                 </div>
                 <Button type="button" className="w-full" onClick={addBook}>
                   <Plus className="h-4 w-4" />
@@ -889,9 +643,7 @@ export function LearningPanel({ userId }: { userId: string }) {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold">Amazon Kindle</div>
-                    <div className="text-xs text-muted-foreground">
-                      {state.connectors.kindleEmail ? "Send-to-Kindle E-Mail ist gesetzt." : "Kindle E-Mail fehlt noch."}
-                    </div>
+                    <div className="text-xs text-muted-foreground">{state.connectors.kindleEmail ? "Send-to-Kindle E-Mail ist gesetzt." : "Kindle E-Mail fehlt noch."}</div>
                   </div>
                   <Button type="button" variant="outline" size="sm" onClick={() => setConnectorsOpen(true)}>
                     <Settings className="h-4 w-4" />
@@ -1010,9 +762,7 @@ export function LearningPanel({ userId }: { userId: string }) {
                     recentWatchedVideos.map((video) => (
                       <div key={video.id} className="rounded-2xl border border-border/70 bg-background/70 p-3">
                         <div className="line-clamp-2 text-sm font-medium">{video.title}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {formatDateTime(video.watchedAt)} | {durationLabel(video.durationMinutes)}
-                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">{formatDateTime(video.watchedAt)} | {durationLabel(video.durationMinutes)}</div>
                       </div>
                     ))
                   )}
@@ -1023,109 +773,25 @@ export function LearningPanel({ userId }: { userId: string }) {
         )}
       </div>
 
-      <Dialog open={connectorsOpen} onOpenChange={setConnectorsOpen}>
-        <DialogContent className="max-h-[92dvh] overflow-y-auto rounded-3xl border border-border/80 bg-background/95 shadow-[0_24px_80px_oklch(0_0_0_/_0.18)] backdrop-blur-xl sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Lern-Connectoren</DialogTitle>
-            <DialogDescription>
-              Kindle, YouTube und Drive Einstellungen nur fuer den Lernbereich von Connect.
-            </DialogDescription>
-          </DialogHeader>
+      <ConnectorDialog
+        open={connectorsOpen}
+        connectors={connectorForm}
+        onChange={setConnectorForm}
+        onOpenChange={setConnectorsOpen}
+        onSave={saveConnectors}
+      />
+    </div>
+  );
+}
 
-          <div className="grid gap-4">
-            <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
-              <div className="flex items-center gap-2 font-semibold">
-                <Mail className="h-4 w-4" />
-                Amazon Kindle
-              </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="learning-kindle-email">Send-to-Kindle E-Mail</Label>
-                  <Input
-                    id="learning-kindle-email"
-                    placeholder="name_123@kindle.com"
-                    value={connectorForm.kindleEmail}
-                    onChange={(event) => setConnectorForm((current) => ({ ...current, kindleEmail: event.currentTarget.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="learning-amazon-email">Amazon Konto E-Mail</Label>
-                  <Input
-                    id="learning-amazon-email"
-                    placeholder="konto@example.com"
-                    value={connectorForm.amazonEmail}
-                    onChange={(event) => setConnectorForm((current) => ({ ...current, amazonEmail: event.currentTarget.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="learning-kindle-url">Kindle Bibliothek</Label>
-                  <Input
-                    id="learning-kindle-url"
-                    placeholder="https://read.amazon.com/kindle-library"
-                    value={connectorForm.kindleLibraryUrl}
-                    onChange={(event) => setConnectorForm((current) => ({ ...current, kindleLibraryUrl: event.currentTarget.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="learning-kindle-label">Import Label</Label>
-                  <Input
-                    id="learning-kindle-label"
-                    value={connectorForm.kindleImportLabel}
-                    onChange={(event) => setConnectorForm((current) => ({ ...current, kindleImportLabel: event.currentTarget.value }))}
-                  />
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={() => openExternal(connectorForm.kindleLibraryUrl)}>
-                  <ExternalLink className="h-4 w-4" />
-                  Kindle oeffnen
-                </Button>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
-              <div className="flex items-center gap-2 font-semibold">
-                <Youtube className="h-4 w-4" />
-                YouTube Import
-              </div>
-              <div className="mt-3 space-y-1.5">
-                <Label htmlFor="learning-youtube-key">YouTube API Key</Label>
-                <Input
-                  id="learning-youtube-key"
-                  type="password"
-                  placeholder="Optional fuer spaetere automatische Kanal-Syncs"
-                  value={connectorForm.youtubeApiKey}
-                  onChange={(event) => setConnectorForm((current) => ({ ...current, youtubeApiKey: event.currentTarget.value }))}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
-              <div className="flex items-center gap-2 font-semibold">
-                <FileText className="h-4 w-4" />
-                Notizen Ablage
-              </div>
-              <div className="mt-3 space-y-1.5">
-                <Label htmlFor="learning-drive-folder">Drive/Export Ordner</Label>
-                <Input
-                  id="learning-drive-folder"
-                  value={connectorForm.googleDriveFolder}
-                  onChange={(event) => setConnectorForm((current) => ({ ...current, googleDriveFolder: event.currentTarget.value }))}
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setConnectorsOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button type="button" onClick={saveConnectors}>
-              Speichern
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+function SectionTitle({ icon: Icon, title, body }: { icon: LucideIcon; title: string; body: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <h2 className="text-lg font-semibold">{title}</h2>
+        <p className="text-sm text-muted-foreground">{body}</p>
+      </div>
+      <Icon className="h-5 w-5 text-muted-foreground" />
     </div>
   );
 }
@@ -1152,6 +818,56 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function TextField({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  disabled = false,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: "text" | "number";
+  disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} type={type} min={type === "number" ? "0" : undefined} value={value} placeholder={placeholder} disabled={disabled} onChange={(event) => onChange(event.currentTarget.value)} />
+    </div>
+  );
+}
+
+function SelectField({
+  id,
+  label,
+  value,
+  categories,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  categories: LearningCategory[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <select id={id} value={value} onChange={(event) => onChange(event.currentTarget.value)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
+        {categories.map((category) => (
+          <option key={category.id} value={category.id}>{category.name}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function EmptyState({ icon: Icon, title, body }: { icon: LucideIcon; title: string; body: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-border/80 bg-background/70 p-6 text-center">
@@ -1162,35 +878,67 @@ function EmptyState({ icon: Icon, title, body }: { icon: LucideIcon; title: stri
   );
 }
 
-function CategorySelect({
-  id,
-  value,
-  categories,
-  onChange,
-}: {
-  id: string;
-  value: string;
-  categories: LearningCategory[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <select
-      id={id}
-      value={value}
-      onChange={(event) => onChange(event.currentTarget.value)}
-      className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring"
-    >
-      {categories.map((category) => (
-        <option key={category.id} value={category.id}>
-          {category.name}
-        </option>
-      ))}
-    </select>
-  );
+function CategoryDot({ category }: { category: LearningCategory | undefined }) {
+  return <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", category?.color ?? "bg-foreground")} />;
 }
 
-function CategoryDot({ category }: { category?: LearningCategory }) {
-  return <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", category?.color ?? "bg-foreground")} />;
+function ChannelRow({
+  channel,
+  category,
+  active,
+  stats,
+  onSelect,
+  onDelete,
+}: {
+  channel: LearningChannel;
+  category: LearningCategory | undefined;
+  active: boolean;
+  stats: { open: number; saved: number; watched: number; minutes: number };
+  onSelect: () => void;
+  onDelete: () => void;
+}) {
+  function onKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    onSelect();
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={onKeyDown}
+      aria-current={active}
+      className={cn(
+        "group w-full rounded-2xl border p-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+        active ? "border-foreground bg-foreground text-background" : "border-border/70 bg-background/70 hover:border-foreground/40",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <CategoryDot category={category} />
+            <span className="truncate text-sm font-semibold">{channel.name}</span>
+          </div>
+          <p className={cn("mt-1 text-xs", active ? "text-background/72" : "text-muted-foreground")}>
+            {stats.open} offen | {stats.watched}/{channel.dailyGoal} Tagesziel
+          </p>
+        </div>
+        <button
+          type="button"
+          aria-label={`${channel.name} entfernen`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete();
+          }}
+          className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-full opacity-70 transition-opacity hover:opacity-100", active ? "hover:bg-background/15" : "hover:bg-muted")}
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function VideoTile({
@@ -1203,7 +951,7 @@ function VideoTile({
   onDelete,
 }: {
   video: LearningVideo;
-  category?: LearningCategory;
+  category: LearningCategory | undefined;
   onOpen: () => void;
   onWatched: () => void;
   onSave: () => void;
@@ -1220,18 +968,7 @@ function VideoTile({
           </div>
           <h3 className="mt-2 line-clamp-3 text-base font-semibold leading-snug">{video.title}</h3>
         </div>
-        <span
-          className={cn(
-            "shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold",
-            video.status === "watched"
-              ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"
-              : video.status === "saved"
-                ? "bg-sky-500/12 text-sky-700 dark:text-sky-300"
-                : "bg-muted text-muted-foreground",
-          )}
-        >
-          {videoStatusLabels[video.status]}
-        </span>
+        <span className={cn("shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold", video.status === "watched" ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300" : video.status === "saved" ? "bg-sky-500/12 text-sky-700 dark:text-sky-300" : "bg-muted text-muted-foreground")}>{videoStatusLabels[video.status]}</span>
       </div>
 
       {video.notes && <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{video.notes}</p>}
@@ -1263,7 +1000,7 @@ function BookTile({
   onDelete,
 }: {
   book: LearningBook;
-  category?: LearningCategory;
+  category: LearningCategory | undefined;
   onProgress: (page: number) => void;
   onStatus: (status: BookStatus) => void;
   onKindle: () => void;
@@ -1283,9 +1020,7 @@ function BookTile({
           <h3 className="mt-2 line-clamp-2 text-lg font-semibold leading-snug">{book.title}</h3>
           {book.author && <p className="mt-1 text-sm text-muted-foreground">{book.author}</p>}
         </div>
-        <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">
-          {bookStatusLabels[book.status]}
-        </span>
+        <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[11px] font-semibold text-muted-foreground">{bookStatusLabels[book.status]}</span>
       </div>
 
       <div className="mt-4">
@@ -1299,25 +1034,10 @@ function BookTile({
       </div>
 
       <div className="mt-4 grid grid-cols-[minmax(0,1fr)_8rem] gap-2">
-        <div className="space-y-1.5">
-          <Label htmlFor={`book-page-${book.id}`}>Aktuelle Seite</Label>
-          <Input
-            id={`book-page-${book.id}`}
-            type="number"
-            min="0"
-            max={book.totalPages || undefined}
-            value={book.currentPage}
-            onChange={(event) => onProgress(parsePositiveInt(event.currentTarget.value, 0))}
-          />
-        </div>
+        <TextField id={`book-page-${book.id}`} label="Aktuelle Seite" type="number" value={`${book.currentPage}`} onChange={(value) => onProgress(parsePositiveInt(value, 0))} />
         <div className="space-y-1.5">
           <Label htmlFor={`book-status-${book.id}`}>Status</Label>
-          <select
-            id={`book-status-${book.id}`}
-            value={book.status}
-            onChange={(event) => onStatus(event.currentTarget.value as BookStatus)}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring"
-          >
+          <select id={`book-status-${book.id}`} value={book.status} onChange={(event) => onStatus(event.currentTarget.value as BookStatus)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm outline-none focus:ring-1 focus:ring-ring">
             <option value="reading">Liest du</option>
             <option value="paused">Pausiert</option>
             <option value="done">Fertig</option>
@@ -1337,34 +1057,86 @@ function BookTile({
   );
 }
 
-function IconButton({
-  label,
-  icon: Icon,
-  onClick,
-  active = false,
-  danger = false,
-}: {
-  label: string;
-  icon: LucideIcon;
-  onClick: () => void;
-  active?: boolean;
-  danger?: boolean;
-}) {
+function IconButton({ label, icon: Icon, onClick, active = false, danger = false }: { label: string; icon: LucideIcon; onClick: () => void; active?: boolean; danger?: boolean }) {
   return (
     <button
       type="button"
       title={label}
       aria-label={label}
       onClick={onClick}
-      className={cn(
-        "grid h-9 place-items-center rounded-xl border border-border/70 transition-colors",
-        active && "border-foreground bg-foreground text-background",
-        danger && "text-destructive hover:border-destructive/40 hover:bg-destructive/10",
-        !active && !danger && "hover:bg-muted",
-      )}
+      className={cn("grid h-9 place-items-center rounded-xl border border-border/70 transition-colors", active && "border-foreground bg-foreground text-background", danger && "text-destructive hover:border-destructive/40 hover:bg-destructive/10", !active && !danger && "hover:bg-muted")}
     >
       <Icon className="h-4 w-4" />
     </button>
+  );
+}
+
+function ConnectorDialog({
+  open,
+  connectors,
+  onChange,
+  onOpenChange,
+  onSave,
+}: {
+  open: boolean;
+  connectors: LearningConnectors;
+  onChange: React.Dispatch<React.SetStateAction<LearningConnectors>>;
+  onOpenChange: (open: boolean) => void;
+  onSave: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[92dvh] overflow-y-auto rounded-3xl border border-border/80 bg-background/95 shadow-[0_24px_80px_oklch(0_0_0_/_0.18)] backdrop-blur-xl sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Lern-Connectoren</DialogTitle>
+          <DialogDescription>Kindle, YouTube und Drive Einstellungen nur fuer den Lernbereich von Connect.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4">
+          <ConnectorCard icon={Mail} title="Amazon Kindle">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <TextField id="learning-kindle-email" label="Send-to-Kindle E-Mail" value={connectors.kindleEmail} placeholder="name_123@kindle.com" onChange={(value) => onChange((current) => ({ ...current, kindleEmail: value }))} />
+              <TextField id="learning-amazon-email" label="Amazon Konto E-Mail" value={connectors.amazonEmail} placeholder="konto@example.com" onChange={(value) => onChange((current) => ({ ...current, amazonEmail: value }))} />
+              <div className="sm:col-span-2">
+                <TextField id="learning-kindle-url" label="Kindle Bibliothek" value={connectors.kindleLibraryUrl} onChange={(value) => onChange((current) => ({ ...current, kindleLibraryUrl: value }))} />
+              </div>
+              <div className="sm:col-span-2">
+                <TextField id="learning-kindle-label" label="Import Label" value={connectors.kindleImportLabel} onChange={(value) => onChange((current) => ({ ...current, kindleImportLabel: value }))} />
+              </div>
+            </div>
+            <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => openExternal(connectors.kindleLibraryUrl)}>
+              <ExternalLink className="h-4 w-4" />
+              Kindle oeffnen
+            </Button>
+          </ConnectorCard>
+
+          <ConnectorCard icon={Youtube} title="YouTube Import">
+            <TextField id="learning-youtube-key" label="YouTube API Key" value={connectors.youtubeApiKey} placeholder="Optional fuer spaetere automatische Kanal-Syncs" onChange={(value) => onChange((current) => ({ ...current, youtubeApiKey: value }))} />
+          </ConnectorCard>
+
+          <ConnectorCard icon={FileText} title="Notizen Ablage">
+            <TextField id="learning-drive-folder" label="Drive/Export Ordner" value={connectors.googleDriveFolder} onChange={(value) => onChange((current) => ({ ...current, googleDriveFolder: value }))} />
+          </ConnectorCard>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Abbrechen</Button>
+          <Button type="button" onClick={onSave}>Speichern</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ConnectorCard({ icon: Icon, title, children }: { icon: LucideIcon; title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
+      <div className="mb-3 flex items-center gap-2 font-semibold">
+        <Icon className="h-4 w-4" />
+        {title}
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -1391,7 +1163,9 @@ function durationLabel(minutes: number): string {
 }
 
 function uid(prefix: string): string {
-  const random = typeof crypto !== "undefined" ? crypto.randomUUID() : Math.random().toString(36).slice(2, 10);
+  const random = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2, 10);
   return `${prefix}-${random}`;
 }
 
@@ -1439,12 +1213,7 @@ function localDayKey(date: Date): string {
 function formatDateTime(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
 function sanitizeFileName(value: string): string {
@@ -1462,7 +1231,7 @@ function downloadMarkdown(filename: string, content: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 250);
 }
 
-function createBookMarkdown(book: LearningBook, category?: LearningCategory): string {
+function createBookMarkdown(book: LearningBook, category: LearningCategory | undefined): string {
   return [
     `# ${book.title}`,
     "",
@@ -1484,10 +1253,7 @@ function createBookMarkdown(book: LearningBook, category?: LearningCategory): st
   ].join("\n");
 }
 
-function createLearningArchiveMarkdown(
-  state: LearningState,
-  categoryById: Map<string, LearningCategory>,
-): string {
+function createLearningArchiveMarkdown(state: LearningState, categoryById: Map<string, LearningCategory>): string {
   const videos = state.videos
     .map((video) => {
       const category = categoryById.get(video.categoryId);
