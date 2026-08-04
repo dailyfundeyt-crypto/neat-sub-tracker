@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Wordmark } from "@/components/Wordmark";
 import { SubscriptionsPanel } from "@/components/SubscriptionsPanel";
 import { AnalysisPanel } from "@/components/AnalysisPanel";
-import { DealsPanel } from "@/components/DealsPanel";
 import { IncomePanel } from "@/components/IncomePanel";
 import { CalendarPanel } from "@/components/CalendarPanel";
 import { BusinessPanel } from "@/components/BusinessPanel";
@@ -21,7 +20,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  BadgePercent,
   Bot,
   CalendarDays,
   ChartNoAxesColumnIncreasing,
@@ -39,9 +37,8 @@ const TABS = [
   { id: 1, label: "Kalender", Icon: CalendarDays },
   { id: 2, label: "Einkommen", Icon: CircleDollarSign },
   { id: 3, label: "Analyse", Icon: ChartNoAxesColumnIncreasing },
-  { id: 4, label: "Rabatte", Icon: BadgePercent },
-  { id: 5, label: "Business", Icon: Bot },
-  { id: 6, label: "Lernen", Icon: GraduationCap },
+  { id: 4, label: "Business", Icon: Bot },
+  { id: 5, label: "Lernen", Icon: GraduationCap },
 ] as const;
 
 
@@ -175,9 +172,6 @@ function AppShellInner({ user }: { user: User }) {
           <AnalysisPanel subs={subs} />
         </section>
         <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
-          <DealsPanel userId={user.id} />
-        </section>
-        <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
           <BusinessPanel userId={user.id} />
         </section>
         <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
@@ -185,8 +179,8 @@ function AppShellInner({ user }: { user: User }) {
         </section>
       </div>
 
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
-        <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(98vw,38rem)] grid-cols-7 items-center gap-1 rounded-[2rem] border p-1">
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+        <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(96vw,32rem)] grid-cols-6 items-center gap-1 rounded-[2rem] border p-1">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -194,7 +188,7 @@ function AppShellInner({ user }: { user: User }) {
               onClick={() => goTo(t.id)}
               aria-current={tab === t.id}
               className={cn(
-                "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-[1.65rem] px-0.5 text-[9px] font-semibold leading-none transition-all duration-300 sm:text-[10px]",
+                "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-[1.65rem] px-1 text-[10px] font-semibold leading-none transition-all duration-300 sm:text-[11px]",
                 tab === t.id ? "liquid-tab-active text-white" : "text-white/58 hover:text-white/86",
               )}
             >
