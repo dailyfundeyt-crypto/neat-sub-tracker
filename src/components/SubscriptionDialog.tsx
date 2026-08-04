@@ -26,7 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { BadgePercent, ImagePlus, Trash2 } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -45,6 +46,11 @@ const empty = {
   next_payment: "",
   cancel_by: "",
   credit: "",
+  discount_title: "",
+  discount_description: "",
+  discount_code: "",
+  discount_url: "",
+  discount_valid_until: "",
 };
 
 export function SubscriptionDialog({
@@ -71,6 +77,11 @@ export function SubscriptionDialog({
         next_payment: editing.next_payment ?? "",
         cancel_by: editing.cancel_by ?? "",
         credit: editing.credit ? String(editing.credit) : "",
+        discount_title: editing.discount_title ?? "",
+        discount_description: editing.discount_description ?? "",
+        discount_code: editing.discount_code ?? "",
+        discount_url: editing.discount_url ?? "",
+        discount_valid_until: editing.discount_valid_until ?? "",
       });
       setLogo(editing.logo_url);
     } else {
@@ -124,6 +135,11 @@ export function SubscriptionDialog({
       next_payment: form.next_payment || null,
       cancel_by: form.cancel_by || null,
       credit: Number(form.credit.replace(",", ".")) || 0,
+      discount_title: form.discount_title.trim() || null,
+      discount_description: form.discount_description.trim() || null,
+      discount_code: form.discount_code.trim() || null,
+      discount_url: form.discount_url.trim() || null,
+      discount_valid_until: form.discount_valid_until || null,
     };
 
     const { error } = editing
@@ -316,6 +332,62 @@ export function SubscriptionDialog({
               Optional – zeigt, wie viele Folgemonate noch gedeckt sind.
             </p>
           </div>
+
+          <section className="rounded-2xl border border-border/70 bg-muted/35 p-3">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <BadgePercent className="h-4 w-4" />
+              Rabatt am Abo
+            </div>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="sub-discount-title">Angebot</Label>
+                <Input
+                  id="sub-discount-title"
+                  placeholder="z. B. 40 % im ersten Jahr"
+                  value={form.discount_title}
+                  onChange={(e) => setForm({ ...form, discount_title: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="sub-discount-description">Beschreibung</Label>
+                <Textarea
+                  id="sub-discount-description"
+                  rows={3}
+                  placeholder="Bedingungen, Quelle, Kündigungshinweis"
+                  value={form.discount_description}
+                  onChange={(e) => setForm({ ...form, discount_description: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="sub-discount-code">Code</Label>
+                  <Input
+                    id="sub-discount-code"
+                    value={form.discount_code}
+                    onChange={(e) => setForm({ ...form, discount_code: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sub-discount-until">Gültig bis</Label>
+                  <Input
+                    id="sub-discount-until"
+                    type="date"
+                    value={form.discount_valid_until}
+                    onChange={(e) => setForm({ ...form, discount_valid_until: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="sub-discount-url">Link</Label>
+                <Input
+                  id="sub-discount-url"
+                  placeholder="https://…"
+                  value={form.discount_url}
+                  onChange={(e) => setForm({ ...form, discount_url: e.target.value })}
+                />
+              </div>
+            </div>
+          </section>
         </div>
 
         <DialogFooter className="gap-2 sm:justify-between">
