@@ -8,6 +8,7 @@ import { DealsPanel } from "@/components/DealsPanel";
 import { IncomePanel } from "@/components/IncomePanel";
 import { CalendarPanel } from "@/components/CalendarPanel";
 import { BusinessPanel } from "@/components/BusinessPanel";
+import { LearningPanel } from "@/components/LearningPanel";
 import type { Subscription } from "@/lib/hyperlite";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,6 +26,7 @@ import {
   CalendarDays,
   ChartNoAxesColumnIncreasing,
   CircleDollarSign,
+  GraduationCap,
   LogOut,
   ReceiptText,
   Settings,
@@ -39,6 +41,7 @@ const TABS = [
   { id: 3, label: "Analyse", Icon: ChartNoAxesColumnIncreasing },
   { id: 4, label: "Rabatte", Icon: BadgePercent },
   { id: 5, label: "Business", Icon: Bot },
+  { id: 6, label: "Lernen", Icon: GraduationCap },
 ] as const;
 
 
@@ -177,10 +180,13 @@ function AppShellInner({ user }: { user: User }) {
         <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
           <BusinessPanel userId={user.id} />
         </section>
+        <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
+          <LearningPanel userId={user.id} />
+        </section>
       </div>
 
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
-        <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(96vw,32rem)] grid-cols-6 items-center gap-1 rounded-[2rem] border p-1">
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+        <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(98vw,38rem)] grid-cols-7 items-center gap-1 rounded-[2rem] border p-1">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -188,7 +194,7 @@ function AppShellInner({ user }: { user: User }) {
               onClick={() => goTo(t.id)}
               aria-current={tab === t.id}
               className={cn(
-                "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-[1.65rem] px-1 text-[10px] font-semibold leading-none transition-all duration-300 sm:text-[11px]",
+                "flex h-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-[1.65rem] px-0.5 text-[9px] font-semibold leading-none transition-all duration-300 sm:text-[10px]",
                 tab === t.id ? "liquid-tab-active text-white" : "text-white/58 hover:text-white/86",
               )}
             >
