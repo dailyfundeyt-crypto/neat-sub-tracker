@@ -20,19 +20,6 @@ export type Subscription = {
   created_at: string;
 };
 
-export type Deal = {
-  id: string;
-  created_by: string;
-  service_name: string;
-  logo_url: string | null;
-  title: string;
-  description: string | null;
-  code: string | null;
-  url: string | null;
-  valid_until: string | null;
-  created_at: string;
-};
-
 export type Income = {
   id: string;
   user_id: string;
