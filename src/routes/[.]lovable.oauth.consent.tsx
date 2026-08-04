@@ -65,7 +65,7 @@ function Consent() {
       setError("Anmeldung fehlgeschlagen. Bitte erneut versuchen.");
       return;
     }
-    if (!result.redirected) window.location.reload();
+    if (!("redirected" in result && result.redirected)) window.location.reload();
   }
 
   async function decide(approve: boolean) {
