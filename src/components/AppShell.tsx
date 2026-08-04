@@ -7,6 +7,7 @@ import { AnalysisPanel } from "@/components/AnalysisPanel";
 import { DealsPanel } from "@/components/DealsPanel";
 import { IncomePanel } from "@/components/IncomePanel";
 import { CalendarPanel } from "@/components/CalendarPanel";
+import { BusinessPanel } from "@/components/BusinessPanel";
 import type { Subscription } from "@/lib/hyperlite";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   BadgePercent,
+  Bot,
   CalendarDays,
   ChartNoAxesColumnIncreasing,
   CircleDollarSign,
@@ -36,6 +38,7 @@ const TABS = [
   { id: 2, label: "Einkommen", Icon: CircleDollarSign },
   { id: 3, label: "Analyse", Icon: ChartNoAxesColumnIncreasing },
   { id: 4, label: "Rabatte", Icon: BadgePercent },
+  { id: 5, label: "Business", Icon: Bot },
 ] as const;
 
 
@@ -171,10 +174,13 @@ function AppShellInner({ user }: { user: User }) {
         <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
           <DealsPanel userId={user.id} />
         </section>
+        <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
+          <BusinessPanel userId={user.id} />
+        </section>
       </div>
 
       <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
-        <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(92vw,28.5rem)] grid-cols-5 items-center gap-1 rounded-[2rem] border p-1">
+        <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(96vw,32rem)] grid-cols-6 items-center gap-1 rounded-[2rem] border p-1">
           {TABS.map((t) => (
             <button
               key={t.id}
