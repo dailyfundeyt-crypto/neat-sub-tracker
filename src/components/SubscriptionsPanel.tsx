@@ -3,13 +3,14 @@ import {
   daysUntil,
   formatDate,
   creditMonths,
+  hasDiscount,
   relativeLabel,
   urgencyScore,
   type Subscription,
 } from "@/lib/hyperlite";
 import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
-import { Plus, CalendarClock, Scissors } from "lucide-react";
+import { BadgePercent, CalendarClock, ExternalLink, Plus, Scissors } from "lucide-react";
 import { SubscriptionDialog } from "@/components/SubscriptionDialog";
 
 function LogoCell({ sub }: { sub: Subscription }) {
@@ -48,6 +49,42 @@ function DueLabel({ date }: { date: string | null }) {
   );
 }
 
+function DiscountCell({ sub }: { sub: Subscription }) {
+  if (!hasDiscount(sub)) return <span className="text-muted-foreground">—</span>;
+
+  const validDays = daysUntil(sub.discount_valid_until);
+  const expiring = validDays !== null && validDays >= 0 && validDays <= 14;
+  const expired = validDays !== null && validDays < 0;
+
+  return (
+    <div className="min-w-0 text-xs">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <BadgePercent className={cn("h-3.5 w-3.5 shrink-0", expiring && "text-warning")} />
+        <span className="truncate font-medium text-foreground">
+          {sub.discount_title || sub.discount_code || "Rabatt hinterlegt"}
+        </span>
+        {sub.discount_url && (
+          <a
+            href={sub.discount_url}
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label="Rabatt öffnen"
+            onClick={(event) => event.stopPropagation()}
+            className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        )}
+      </div>
+      <div className="mt-0.5 truncate text-muted-foreground">
+        {sub.discount_code ? `Code ${sub.discount_code}` : "Ohne Code"}
+        {sub.discount_valid_until ? ` · bis ${formatDate(sub.discount_valid_until)}` : ""}
+        {expired ? " · abgelaufen" : ""}
+      </div>
+    </div>
+  );
+}
+
 export function SubscriptionsPanel({
   subs,
   userId,
@@ -81,7 +118,7 @@ export function SubscriptionsPanel({
   const upcoming = useMemo(() => {
     const items: {
       key: string;
-      icon: "pay" | "cancel";
+      icon: "pay" | "cancel" | "discount";
       text: string;
       days: number;
     }[] = [];
@@ -101,6 +138,14 @@ export function SubscriptionsPanel({
           icon: "cancel",
           text: `${s.name} kündigen ${relativeLabel(c)}`,
           days: c,
+        });
+      const d = hasDiscount(s) ? daysUntil(s.discount_valid_until) : null;
+      if (d !== null && d >= 0 && d <= 14)
+        items.push({
+          key: `d-${s.id}`,
+          icon: "discount",
+          text: `${s.name} Rabatt endet ${relativeLabel(d)}`,
+          days: d,
         });
     }
     return items.sort((a, b) => a.days - b.days);
@@ -145,8 +190,10 @@ export function SubscriptionsPanel({
             >
               {u.icon === "pay" ? (
                 <CalendarClock className="h-3.5 w-3.5" />
-              ) : (
+              ) : u.icon === "cancel" ? (
                 <Scissors className="h-3.5 w-3.5" />
+              ) : (
+                <BadgePercent className="h-3.5 w-3.5" />
               )}
               {u.text}
             </span>
@@ -179,7 +226,6 @@ export function SubscriptionsPanel({
                   </span>
                 </div>
 
-                {/* Desktop: Tabelle */}
                 <div className="mt-2 hidden overflow-hidden rounded-2xl border border-border md:block">
                   <table className="w-full border-collapse text-sm">
                     <thead>
@@ -187,6 +233,7 @@ export function SubscriptionsPanel({
                         <th className="px-4 py-3 font-medium">Dienst</th>
                         <th className="px-4 py-3 font-medium">Kategorie</th>
                         <th className="px-4 py-3 font-medium">Preis</th>
+                        <th className="px-4 py-3 font-medium">Rabatt</th>
                         <th className="px-4 py-3 font-medium">Nächste Zahlung</th>
                         <th className="px-4 py-3 font-medium">Kündigen bis</th>
                         <th className="px-4 py-3 font-medium">Guthaben</th>
@@ -220,6 +267,9 @@ export function SubscriptionsPanel({
                                   : " / Monat"}
                               </span>
                             </td>
+                            <td className="max-w-[13rem] px-4 py-3">
+                              <DiscountCell sub={s} />
+                            </td>
                             <td className="px-4 py-3">
                               <DueLabel date={s.next_payment} />
                             </td>
@@ -248,7 +298,6 @@ export function SubscriptionsPanel({
                   </table>
                 </div>
 
-                {/* Mobil: kompakte Zeilenkarten */}
                 <ul className="mt-2 space-y-2 md:hidden">
                   {g.rows.map((s) => {
                     const months = creditMonths(s);
@@ -277,6 +326,20 @@ export function SubscriptionsPanel({
                             </p>
                           </div>
                           <div className="mt-3 space-y-1 text-xs">
+                            {hasDiscount(s) && (
+                              <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 rounded-xl bg-muted/55 px-3 py-2">
+                                <BadgePercent className="mt-0.5 h-3.5 w-3.5" />
+                                <div className="min-w-0">
+                                  <div className="truncate font-medium">
+                                    {s.discount_title || s.discount_code || "Rabatt hinterlegt"}
+                                  </div>
+                                  <div className="truncate text-muted-foreground">
+                                    {s.discount_code ? `Code ${s.discount_code}` : "Ohne Code"}
+                                    {s.discount_valid_until ? ` · bis ${formatDate(s.discount_valid_until)}` : ""}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-muted-foreground">
                                 Nächste Zahlung
