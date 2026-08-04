@@ -129,7 +129,7 @@ function AppShellInner({ user }: { user: User }) {
         </DropdownMenu>
       </header>
 
-      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:top-[57px] md:z-10 md:flex md:w-64 md:flex-col md:border-r md:border-white/10 md:bg-[#0f0f0f] md:px-3 md:py-4 md:text-white">
+      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:top-[57px] md:z-10 md:flex md:w-64 md:flex-col md:border-r md:border-sidebar-border md:bg-sidebar md:px-3 md:py-4 md:text-sidebar-foreground">
         <nav className="space-y-1">
           {TABS.map((t) => (
             <button
@@ -140,8 +140,8 @@ function AppShellInner({ user }: { user: User }) {
               className={cn(
                 "flex h-12 w-full items-center gap-5 rounded-xl px-4 text-left text-sm font-semibold transition-colors",
                 tab === t.id
-                  ? "bg-white/14 text-white"
-                  : "text-white/78 hover:bg-white/10 hover:text-white",
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                  : "text-sidebar-foreground/68 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
               )}
             >
               <t.Icon className="h-5 w-5 shrink-0" strokeWidth={2.1} />
