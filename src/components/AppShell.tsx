@@ -30,10 +30,12 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 
 const TABS = [
   { id: 0, label: "Ausgaben", Icon: ReceiptText },
-  { id: 1, label: "Einkommen", Icon: CircleDollarSign },
-  { id: 2, label: "Analyse", Icon: ChartNoAxesColumnIncreasing },
-  { id: 3, label: "Rabatte", Icon: BadgePercent },
+  { id: 1, label: "Kalender", Icon: CalendarDays },
+  { id: 2, label: "Einkommen", Icon: CircleDollarSign },
+  { id: 3, label: "Analyse", Icon: ChartNoAxesColumnIncreasing },
+  { id: 4, label: "Rabatte", Icon: BadgePercent },
 ] as const;
+
 
 export function AppShell({ user }: { user: User }) {
   return (
