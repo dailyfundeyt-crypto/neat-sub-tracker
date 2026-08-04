@@ -28,6 +28,11 @@ type SubscriptionRow = {
   next_payment: string | null;
   cancel_by: string | null;
   credit: number;
+  discount_title: string | null;
+  discount_description: string | null;
+  discount_code: string | null;
+  discount_url: string | null;
+  discount_valid_until: string | null;
 };
 
 type IncomeRow = {
@@ -40,9 +45,9 @@ type IncomeRow = {
   note: string | null;
 };
 
-type DealRow = {
-  service_name: string;
-  title: string;
+type DiscountRow = {
+  subscription_name: string;
+  title: string | null;
   description: string | null;
   code: string | null;
   url: string | null;
@@ -91,6 +96,27 @@ function monthlyIncomeAmount(row: IncomeRow): number {
   return row.amount;
 }
 
+function hasSubscriptionDiscount(row: SubscriptionRow): boolean {
+  return Boolean(
+    row.discount_title ||
+      row.discount_description ||
+      row.discount_code ||
+      row.discount_url ||
+      row.discount_valid_until,
+  );
+}
+
+function toDiscount(row: SubscriptionRow): DiscountRow {
+  return {
+    subscription_name: row.name,
+    title: row.discount_title,
+    description: row.discount_description,
+    code: row.discount_code,
+    url: row.discount_url,
+    valid_until: row.discount_valid_until,
+  };
+}
+
 async function getAccess(request: Request): Promise<DataAccess | null> {
   const token = getBearerToken(request);
   if (!token) return null;
@@ -110,7 +136,7 @@ async function loadConnectData(access: DataAccess) {
   const payload: {
     expenses?: SubscriptionRow[];
     income?: IncomeRow[];
-    deals?: DealRow[];
+    deals?: DiscountRow[];
     analysis?: {
       monthly_expenses: number;
       monthly_income: number;
@@ -123,13 +149,13 @@ async function loadConnectData(access: DataAccess) {
 
   let expenses: SubscriptionRow[] = [];
   let income: IncomeRow[] = [];
-  let deals: DealRow[] = [];
+  let deals: DiscountRow[] = [];
 
-  if (access.expose_expenses || access.expose_analysis) {
+  if (access.expose_expenses || access.expose_deals || access.expose_analysis) {
     const { data } = await supabaseAdmin
       .from("subscriptions")
       .select(
-        "name, group_name, category, price, billing_interval, next_payment, cancel_by, credit",
+        "name, group_name, category, price, billing_interval, next_payment, cancel_by, credit, discount_title, discount_description, discount_code, discount_url, discount_valid_until",
       )
       .eq("user_id", access.user_id)
       .order("created_at", { ascending: false });
@@ -148,12 +174,7 @@ async function loadConnectData(access: DataAccess) {
   }
 
   if (access.expose_deals || access.expose_analysis) {
-    const { data } = await supabaseAdmin
-      .from("deals")
-      .select("service_name, title, description, code, url, valid_until")
-      .eq("created_by", access.user_id)
-      .order("created_at", { ascending: false });
-    deals = (data as DealRow[]) ?? [];
+    deals = expenses.filter(hasSubscriptionDiscount).map(toDiscount);
     if (access.expose_deals) payload.deals = deals;
   }
 
@@ -212,7 +233,7 @@ export const Route = createFileRoute("/api/mcp/data")({
               {
                 name: "connect.get_data",
                 description:
-                  "Liest freigegebene Connect Ausgaben, Einkünfte, Rabatte und Analyse.",
+                  "Liest freigegebene Connect Ausgaben, Einkünfte, Abo-Rabatte und Analyse.",
                 inputSchema: { type: "object", properties: {} },
               },
               {
