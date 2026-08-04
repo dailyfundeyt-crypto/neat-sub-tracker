@@ -6,6 +6,7 @@ import { SubscriptionsPanel } from "@/components/SubscriptionsPanel";
 import { AnalysisPanel } from "@/components/AnalysisPanel";
 import { DealsPanel } from "@/components/DealsPanel";
 import { IncomePanel } from "@/components/IncomePanel";
+import { CalendarPanel } from "@/components/CalendarPanel";
 import type { Subscription } from "@/lib/hyperlite";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   BadgePercent,
+  CalendarDays,
   ChartNoAxesColumnIncreasing,
   CircleDollarSign,
   LogOut,
@@ -30,10 +32,12 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 
 const TABS = [
   { id: 0, label: "Ausgaben", Icon: ReceiptText },
-  { id: 1, label: "Einkommen", Icon: CircleDollarSign },
-  { id: 2, label: "Analyse", Icon: ChartNoAxesColumnIncreasing },
-  { id: 3, label: "Rabatte", Icon: BadgePercent },
+  { id: 1, label: "Kalender", Icon: CalendarDays },
+  { id: 2, label: "Einkommen", Icon: CircleDollarSign },
+  { id: 3, label: "Analyse", Icon: ChartNoAxesColumnIncreasing },
+  { id: 4, label: "Rabatte", Icon: BadgePercent },
 ] as const;
+
 
 export function AppShell({ user }: { user: User }) {
   return (
@@ -156,6 +160,9 @@ function AppShellInner({ user }: { user: User }) {
           <SubscriptionsPanel subs={subs} userId={user.id} onChanged={loadSubs} />
         </section>
         <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
+          <CalendarPanel userId={user.id} />
+        </section>
+        <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
           <IncomePanel userId={user.id} />
         </section>
         <section className="h-full w-full shrink-0 snap-center overflow-y-auto pt-4">
@@ -167,7 +174,7 @@ function AppShellInner({ user }: { user: User }) {
       </div>
 
       <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
-        <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(92vw,28.5rem)] grid-cols-4 items-center gap-1 rounded-[2rem] border p-1">
+        <div className="liquid-tabbar pointer-events-auto grid h-[3.75rem] w-[min(92vw,28.5rem)] grid-cols-5 items-center gap-1 rounded-[2rem] border p-1">
           {TABS.map((t) => (
             <button
               key={t.id}
