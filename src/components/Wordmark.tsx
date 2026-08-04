@@ -1,5 +1,6 @@
-import logoAsset from "@/assets/hyperlite-logo.png.asset.json";
 import { cn } from "@/lib/utils";
+
+const logoSrc = "/connect-logo.svg";
 
 export function Wordmark({
   className,
@@ -15,8 +16,8 @@ export function Wordmark({
         style={{ width: size, height: size, minWidth: size, minHeight: size }}
       >
         <img
-          src={logoAsset.url}
-          alt="HyperLite Logo"
+          src={logoSrc}
+          alt="Connect Logo"
           width={size}
           height={size}
           className="h-full w-full object-contain"
@@ -26,7 +27,7 @@ export function Wordmark({
         className="truncate font-display font-bold tracking-tight text-foreground"
         style={{ fontSize: size * 0.62, lineHeight: 1.1 }}
       >
-        HyperLite
+        Connect
       </span>
     </div>
   );
