@@ -99,28 +99,31 @@ type TaskAction =
   | { type: "MAIL_OPENED"; at: string }
   | { type: "REPLY_CAPTURED"; at: string };
 
-function defaultState(): BusinessState {
+function defaultCompany(): Company {
   return {
-    activeCompanyId: DEFAULT_COMPANY_ID,
-    selectedAgentIds: [DEFAULT_AGENT_ID],
-    companies: [
+    id: DEFAULT_COMPANY_ID,
+    name: "Connect",
+    agents: [
       {
-        id: DEFAULT_COMPANY_ID,
-        name: "Connect",
-        agents: [
-          {
-            id: DEFAULT_AGENT_ID,
-            label: "Connect AI",
-            email: "agent@connect.local",
-            avatarUrl: "",
-          },
-        ],
+        id: DEFAULT_AGENT_ID,
+        label: "Connect AI",
+        email: "agent@connect.local",
+        avatarUrl: "",
       },
     ],
+  };
+}
+
+function defaultState(): BusinessState {
+  const company = defaultCompany();
+  return {
+    activeCompanyId: company.id,
+    selectedAgentIds: [DEFAULT_AGENT_ID],
+    companies: [company],
     messages: [
       {
         id: "welcome-message",
-        companyId: DEFAULT_COMPANY_ID,
+        companyId: company.id,
         role: "system",
         body: "Business-Chat bereit.",
         createdAt: new Date().toISOString(),
@@ -139,9 +142,11 @@ function uid(prefix: string): string {
 }
 
 function initials(value: string): string {
-  const parts = value.trim().split(/\s+/).filter(Boolean);
-  const letters = parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}` : value.slice(0, 2);
-  return letters.toUpperCase();
+  const compact = value.trim();
+  const parts = compact.split(/\s+/).filter(Boolean);
+  const first = parts[0]?.slice(0, 1) || compact.slice(0, 1) || "A";
+  const second = parts[1]?.slice(0, 1) ?? parts[0]?.slice(1, 2) ?? "";
+  return `${first}${second}`.toUpperCase();
 }
 
 function formatTime(value: string): string {
@@ -306,7 +311,9 @@ export function BusinessPanel({ userId }: { userId: string }) {
   }, [state, userId]);
 
   const activeCompany =
-    state.companies.find((company) => company.id === state.activeCompanyId) ?? state.companies[0];
+    state.companies.find((company) => company.id === state.activeCompanyId) ??
+    state.companies[0] ??
+    defaultCompany();
   const activeMessages = useMemo(
     () => state.messages.filter((message) => message.companyId === activeCompany.id),
     [activeCompany.id, state.messages],
@@ -330,10 +337,11 @@ export function BusinessPanel({ userId }: { userId: string }) {
   function selectCompany(companyId: string) {
     const company = state.companies.find((item) => item.id === companyId);
     if (!company) return;
+    const firstAgentId = company.agents[0]?.id;
     setState((current) => ({
       ...current,
       activeCompanyId: company.id,
-      selectedAgentIds: company.agents[0] ? [company.agents[0].id] : [],
+      selectedAgentIds: firstAgentId ? [firstAgentId] : [],
     }));
   }
 
@@ -835,7 +843,9 @@ export function BusinessPanel({ userId }: { userId: string }) {
           <div className="space-y-4">
             <div className="rounded-2xl border border-border bg-muted/30 p-3">
               <p className="text-sm font-bold">{replyAgent?.label ?? "Agent"}</p>
-              <p className="mt-1 line-clamp-3 text-xs text-muted-foreground">{replyTask?.body}</p>
+              <p className="mt-1 max-h-16 overflow-hidden text-xs text-muted-foreground">
+                {replyTask?.body}
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="reply-body">Antworttext</Label>
