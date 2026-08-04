@@ -13,6 +13,10 @@ import appCss from "../styles.css?url";
 import { Toaster } from "@/components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
+const appTitle = "Connect – Abos, Kosten und Kündigungen im Blick";
+const appDescription =
+  "Connect bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.";
+const appIcon = "/connect-logo.svg";
 
 function NotFoundComponent() {
   return (
@@ -79,24 +83,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "HyperLite – Abos, Kosten und Kündigungen im Blick" },
+      { name: "theme-color", content: "#ffffff" },
+      { title: appTitle },
       {
         name: "description",
-        content:
-          "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.",
+        content: appDescription,
       },
-      { property: "og:title", content: "HyperLite – Abos, Kosten und Kündigungen im Blick" },
+      { property: "og:title", content: appTitle },
       {
         property: "og:description",
-        content:
-          "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil.",
+        content: appDescription,
       },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "HyperLite – Abos, Kosten und Kündigungen im Blick" },
-      { name: "twitter:description", content: "HyperLite bündelt deine Abos: Preise, nächste Zahlungen, Kündigungsfristen, Auswertungen und geteilte Rabatte – minimalistisch und mobil." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d3574f6f-ba86-4e87-a094-4d2b464c9ddc/id-preview-6c1a8eb1--e10f46a5-83a8-443d-9a1a-3b2d49f97313.lovable.app-1785682949716.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d3574f6f-ba86-4e87-a094-4d2b464c9ddc/id-preview-6c1a8eb1--e10f46a5-83a8-443d-9a1a-3b2d49f97313.lovable.app-1785682949716.png" },
+      { property: "og:image", content: appIcon },
+      { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: appTitle },
+      { name: "twitter:description", content: appDescription },
+      { name: "twitter:image", content: appIcon },
     ],
     links: [
       {
@@ -109,7 +112,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap",
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "icon", href: appIcon, type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: appIcon },
+      { rel: "manifest", href: "/manifest.json" },
     ],
   }),
 
@@ -121,7 +126,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="de">
       <head>
         <HeadContent />
       </head>
