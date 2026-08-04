@@ -53,6 +53,51 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          all_day: boolean
+          created_at: string
+          end_time: string | null
+          event_date: string
+          id: string
+          note: string | null
+          repeat_rule: string
+          repeat_until: string | null
+          start_time: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_day?: boolean
+          created_at?: string
+          end_time?: string | null
+          event_date: string
+          id?: string
+          note?: string | null
+          repeat_rule?: string
+          repeat_until?: string | null
+          start_time?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_day?: boolean
+          created_at?: string
+          end_time?: string | null
+          event_date?: string
+          id?: string
+          note?: string | null
+          repeat_rule?: string
+          repeat_until?: string | null
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       incomes: {
         Row: {
           amount: number
