@@ -28,7 +28,7 @@ const defaultSettings: DataAccessSettings = {
 const dataScopes = [
   { key: "expose_expenses", label: "Ausgaben" },
   { key: "expose_income", label: "Einkünfte" },
-  { key: "expose_deals", label: "Rabatte" },
+  { key: "expose_deals", label: "Abo-Rabatte" },
   { key: "expose_analysis", label: "Analyse" },
 ] as const;
 
