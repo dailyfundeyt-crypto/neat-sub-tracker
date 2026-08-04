@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Repeat } from "lucide-react";
+import { Bell, BellOff, ChevronLeft, ChevronRight, Plus, Repeat } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   REPEAT_LABELS,
@@ -26,6 +27,10 @@ const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const HOUR_HEIGHT = 72;
 const DAY_MINUTES = 24 * 60;
 const MIN_EVENT_HEIGHT = 38;
+const NOTIFICATION_PREF_KEY = "connect-calendar-notifications";
+const NOTIFIED_EVENTS_KEY = "connect-calendar-notified-events";
+const NOTIFICATION_GRACE_MINUTES = 1;
+const MAX_NOTIFIED_EVENTS = 180;
 
 function padTime(value: number): string {
   return String(value).padStart(2, "0");
@@ -49,6 +54,35 @@ function timeToMinutes(value: string | null): number | null {
   const minutes = Number(minutesRaw);
   if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
   return Math.min(Math.max(hours * 60 + minutes, 0), DAY_MINUTES - 1);
+}
+
+function notificationsSupported(): boolean {
+  return typeof window !== "undefined" && "Notification" in window;
+}
+
+function readNotifiedEventKeys(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+
+  try {
+    const stored = window.localStorage.getItem(NOTIFIED_EVENTS_KEY);
+    if (!stored) return new Set();
+    const keys = JSON.parse(stored);
+    if (!Array.isArray(keys)) return new Set();
+    return new Set(keys.filter((key): key is string => typeof key === "string"));
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberNotifiedEventKey(keys: Set<string>, key: string) {
+  keys.add(key);
+  const recentKeys = Array.from(keys).slice(-MAX_NOTIFIED_EVENTS);
+  keys.clear();
+  recentKeys.forEach((recentKey) => keys.add(recentKey));
+
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(NOTIFIED_EVENTS_KEY, JSON.stringify(recentKeys));
+  }
 }
 
 type TimedEventBlock = {
@@ -116,7 +150,10 @@ export function CalendarPanel({ userId }: { userId: string }) {
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [form, setForm] = useState<EventForm>(() => emptyEventForm(toISODate(new Date())));
   const [now, setNow] = useState(() => new Date());
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
+  const notifiedEventsRef = useRef<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -131,9 +168,64 @@ export function CalendarPanel({ userId }: { userId: string }) {
   }, [load]);
 
   useEffect(() => {
+    notifiedEventsRef.current = readNotifiedEventKeys();
+
+    if (!notificationsSupported()) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+
+    const permission = Notification.permission;
+    setNotificationPermission(permission);
+    setNotificationsEnabled(
+      window.localStorage.getItem(NOTIFICATION_PREF_KEY) === "on" && permission === "granted",
+    );
+  }, []);
+
+  useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 60000);
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const todayEvents = eventsForDay(events, now);
+    const todayISO = toISODate(now);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    for (const event of todayEvents) {
+      if (event.all_day || !event.start_time) continue;
+
+      const startMinutes = timeToMinutes(event.start_time);
+      if (startMinutes === null) continue;
+
+      const minutesSinceStart = currentMinutes - startMinutes;
+      if (minutesSinceStart < 0 || minutesSinceStart > NOTIFICATION_GRACE_MINUTES) continue;
+
+      const notificationKey = `${event.id}:${todayISO}:${event.start_time.slice(0, 5)}`;
+      if (notifiedEventsRef.current.has(notificationKey)) continue;
+
+      rememberNotifiedEventKey(notifiedEventsRef.current, notificationKey);
+      const startLabel = formatClock(startMinutes);
+      toast(`${event.title} beginnt jetzt`, {
+        description: `Auftrag um ${startLabel} Uhr`,
+      });
+
+      if (notificationsEnabled && notificationsSupported() && Notification.permission === "granted") {
+        const notification = new Notification("Connect: Auftrag beginnt", {
+          body: `${event.title} startet jetzt um ${startLabel} Uhr.`,
+          icon: "/connect-logo.svg",
+          badge: "/connect-logo.svg",
+          tag: notificationKey,
+          renotify: true,
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+      }
+    }
+  }, [events, now, notificationsEnabled]);
 
   useEffect(() => {
     const timeline = timelineRef.current;
@@ -156,6 +248,51 @@ export function CalendarPanel({ userId }: { userId: string }) {
   const currentMinute = now.getHours() * 60 + now.getMinutes();
   const nowTop = (currentMinute / 60) * HOUR_HEIGHT;
   const timelineHeight = DAY_MINUTES / 60 * HOUR_HEIGHT;
+  const notificationButtonLabel = notificationsEnabled
+    ? "Kalender-Benachrichtigungen ausschalten"
+    : notificationPermission === "denied"
+      ? "Benachrichtigungen im Browser blockiert"
+      : "Kalender-Benachrichtigungen einschalten";
+  const NotificationIcon = notificationsEnabled ? Bell : BellOff;
+
+  async function toggleCalendarNotifications() {
+    if (typeof window === "undefined") return;
+
+    if (notificationsEnabled) {
+      window.localStorage.setItem(NOTIFICATION_PREF_KEY, "off");
+      setNotificationsEnabled(false);
+      toast("Kalender-Benachrichtigungen deaktiviert.");
+      return;
+    }
+
+    if (!notificationsSupported()) {
+      setNotificationPermission("unsupported");
+      toast.error("Browser-Benachrichtigungen werden hier nicht unterstützt.");
+      return;
+    }
+
+    let permission = Notification.permission;
+    if (permission === "default") {
+      permission = await Notification.requestPermission();
+    }
+
+    setNotificationPermission(permission);
+
+    if (permission === "granted") {
+      window.localStorage.setItem(NOTIFICATION_PREF_KEY, "on");
+      setNotificationsEnabled(true);
+      toast.success("Kalender-Benachrichtigungen aktiviert.");
+      return;
+    }
+
+    window.localStorage.setItem(NOTIFICATION_PREF_KEY, "off");
+    setNotificationsEnabled(false);
+    toast.error(
+      permission === "denied"
+        ? "Benachrichtigungen sind im Browser blockiert."
+        : "Benachrichtigungen wurden nicht aktiviert.",
+    );
+  }
 
   function openNew(date: Date) {
     setEditing(null);
@@ -205,6 +342,21 @@ export function CalendarPanel({ userId }: { userId: string }) {
             className="h-9 rounded-full border border-border px-3 text-xs font-semibold transition-colors hover:bg-muted md:h-10 md:px-4 md:text-sm"
           >
             Heute
+          </button>
+          <button
+            type="button"
+            aria-label={notificationButtonLabel}
+            title={notificationButtonLabel}
+            onClick={() => void toggleCalendarNotifications()}
+            className={cn(
+              "grid h-9 w-9 place-items-center rounded-full border transition-colors md:h-10 md:w-10",
+              notificationsEnabled
+                ? "border-foreground bg-foreground text-background hover:bg-foreground/90"
+                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+              notificationPermission === "denied" && "text-muted-foreground/55",
+            )}
+          >
+            <NotificationIcon className="h-4 w-4" />
           </button>
           <button
             type="button"
