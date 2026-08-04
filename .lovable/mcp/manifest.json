@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://bwtdcehzluniwfrpgpro.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "hyperlite-subs-tracker",
+      "version": "0.1.0",
+      "title": "HyperLite Subs Tracker"
+    },
+    "tools": [
+      {
+        "name": "list_subscriptions",
+        "title": "Abos auflisten",
+        "description": "Listet die Abos/Ausgaben des angemeldeten Nutzers mit Preis, Intervall und Fristen.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "group_name": {
+              "type": "string",
+              "description": "Optional: nur Abos dieser Gruppe."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_subscription",
+        "title": "Abo anlegen",
+        "description": "Legt ein neues Abo (Ausgabe) für den angemeldeten Nutzer an.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name des Dienstes, z. B. Adobe."
+            },
+            "price": {
+              "type": "number",
+              "description": "Preis pro Abrechnungszeitraum."
+            },
+            "billing_interval": {
+              "type": "string",
+              "enum": [
+                "monthly",
+                "yearly"
+              ],
+              "description": "Abrechnungsintervall."
+            },
+            "category": {
+              "type": "string",
+              "description": "Kategorie, z. B. Software."
+            },
+            "group_name": {
+              "type": "string",
+              "description": "Gruppe, z. B. Business."
+            },
+            "next_payment": {
+              "type": "string",
+              "description": "Nächste Zahlung als YYYY-MM-DD."
+            },
+            "cancel_by": {
+              "type": "string",
+              "description": "Kündigen bis als YYYY-MM-DD."
+            },
+            "credit": {
+              "type": "number",
+              "description": "Vorhandenes Guthaben."
+            }
+          },
+          "required": [
+            "name",
+            "price",
+            "billing_interval"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_incomes",
+        "title": "Einkommen auflisten",
+        "description": "Listet die Einkommensquellen (Side Hustles, Arbeit) des angemeldeten Nutzers.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "group_name": {
+              "type": "string",
+              "description": "Optional: nur Einträge dieser Gruppe."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_income",
+        "title": "Einkommen anlegen",
+        "description": "Legt eine neue Einkommensquelle für den angemeldeten Nutzer an.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Bezeichnung der Einkommensquelle."
+            },
+            "amount": {
+              "type": "number",
+              "description": "Betrag pro Intervall."
+            },
+            "interval": {
+              "type": "string",
+              "enum": [
+                "monthly",
+                "yearly",
+                "once"
+              ],
+              "description": "Zahlungsintervall."
+            },
+            "category": {
+              "type": "string",
+              "description": "Kategorie, z. B. Freelance."
+            },
+            "group_name": {
+              "type": "string",
+              "description": "Gruppe: Selbständig oder Arbeit."
+            },
+            "next_payout": {
+              "type": "string",
+              "description": "Nächste Auszahlung als YYYY-MM-DD."
+            },
+            "note": {
+              "type": "string",
+              "description": "Freie Notiz."
+            }
+          },
+          "required": [
+            "name",
+            "amount",
+            "interval"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_events",
+        "title": "Termine auflisten",
+        "description": "Listet die Kalendertermine des angemeldeten Nutzers, optional in einem Zeitraum.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string",
+              "description": "Startdatum YYYY-MM-DD (inklusive)."
+            },
+            "to": {
+              "type": "string",
+              "description": "Enddatum YYYY-MM-DD (inklusive)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_event",
+        "title": "Termin anlegen",
+        "description": "Legt einen Kalendertermin für den angemeldeten Nutzer an, optional wiederkehrend.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Titel des Termins."
+            },
+            "event_date": {
+              "type": "string",
+              "description": "Datum als YYYY-MM-DD."
+            },
+            "all_day": {
+              "type": "boolean",
+              "description": "Ganztägiger Termin."
+            },
+            "start_time": {
+              "type": "string",
+              "description": "Startzeit HH:MM."
+            },
+            "end_time": {
+              "type": "string",
+              "description": "Endzeit HH:MM."
+            },
+            "note": {
+              "type": "string",
+              "description": "Notiz zum Termin."
+            },
+            "repeat_rule": {
+              "type": "string",
+              "enum": [
+                "none",
+                "daily",
+                "weekly",
+                "biweekly",
+                "monthly"
+              ],
+              "description": "Wiederholung."
+            },
+            "repeat_until": {
+              "type": "string",
+              "description": "Wiederholen bis YYYY-MM-DD."
+            }
+          },
+          "required": [
+            "title",
+            "event_date"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_deals",
+        "title": "Rabatte auflisten",
+        "description": "Listet die von der Community geteilten Rabatte und Gutscheincodes.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "Optionaler Suchbegriff für den Dienstnamen."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
