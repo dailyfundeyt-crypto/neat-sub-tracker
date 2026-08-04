@@ -37,6 +37,11 @@ export type EventForm = {
   note: string;
 };
 
+function timeToMinutes(value: string): number {
+  const [hoursRaw, minutesRaw = "0"] = value.split(":");
+  return Number(hoursRaw) * 60 + Number(minutesRaw);
+}
+
 export function emptyEventForm(date: string): EventForm {
   return {
     title: "",
@@ -99,6 +104,14 @@ export function EventDialog({
     }
     if (!form.event_date) {
       toast.error("Datum fehlt.");
+      return;
+    }
+    if (!form.all_day && !form.start_time) {
+      toast.error("Startzeit fehlt.");
+      return;
+    }
+    if (!form.all_day && form.end_time && timeToMinutes(form.end_time) <= timeToMinutes(form.start_time)) {
+      toast.error("Endzeit muss nach der Startzeit liegen.");
       return;
     }
     setSaving(true);
