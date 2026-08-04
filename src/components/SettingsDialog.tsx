@@ -1,5 +1,19 @@
 import { useEffect, useState } from "react";
-import { Database, Moon, Plug, Plus, SlidersHorizontal, Sun, X } from "lucide-react";
+import {
+  BookOpen,
+  Database,
+  ExternalLink,
+  FileText,
+  Mail,
+  Moon,
+  Plug,
+  Plus,
+  SlidersHorizontal,
+  Sun,
+  X,
+  Youtube,
+} from "lucide-react";
+import { toast } from "sonner";
 import { CURRENCIES, useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,9 +29,16 @@ import {
 } from "@/components/ui/select";
 import { McpConnectionsSection } from "@/components/McpConnectionsSection";
 import { McpDataAccessSection } from "@/components/McpDataAccessSection";
+import {
+  LEARNING_STATE_EVENT,
+  readLearningState,
+  updateLearningConnectors,
+} from "@/lib/learning";
+import type { LearningConnectors } from "@/lib/learning";
 
 const settingsTabs = [
   { id: "general", label: "Allgemein", Icon: SlidersHorizontal },
+  { id: "learning", label: "Lernen", Icon: BookOpen },
   { id: "mcp", label: "MCP", Icon: Plug },
   { id: "data", label: "Daten", Icon: Database },
 ] as const;
@@ -52,6 +73,9 @@ export function SettingsDialog({
   const [draft, setDraft] = useState("");
   const [tab, setTab] = useState<SettingsTab>("general");
   const [theme, setTheme] = useState<Theme>("light");
+  const [learningConnectors, setLearningConnectors] = useState<LearningConnectors>(() =>
+    readLearningState(userId).connectors,
+  );
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
@@ -60,6 +84,11 @@ export function SettingsDialog({
     setTheme(nextTheme);
     applyTheme(nextTheme);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    setLearningConnectors(readLearningState(userId).connectors);
+  }, [open, userId]);
 
   function chooseTheme(nextTheme: Theme) {
     setTheme(nextTheme);
@@ -72,6 +101,19 @@ export function SettingsDialog({
     if (!name || expenseGroups.includes(name)) return;
     void setExpenseGroups([...expenseGroups, name]);
     setDraft("");
+  }
+
+  function saveLearningConnectors() {
+    updateLearningConnectors(userId, learningConnectors);
+    if (typeof window !== "undefined") window.dispatchEvent(new Event(LEARNING_STATE_EVENT));
+    toast.success("Lern-Connectoren gespeichert.");
+  }
+
+  function openExternal(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed || typeof window === "undefined") return;
+    const href = /^(https?:|mailto:)/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    window.open(href, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -183,6 +225,130 @@ export function SettingsDialog({
                     </Button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {tab === "learning" && (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <Mail className="h-4 w-4" />
+                    Amazon Kindle
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="settings-kindle-email">Send-to-Kindle E-Mail</Label>
+                      <Input
+                        id="settings-kindle-email"
+                        placeholder="name_123@kindle.com"
+                        value={learningConnectors.kindleEmail}
+                        onChange={(event) =>
+                          setLearningConnectors((current) => ({
+                            ...current,
+                            kindleEmail: event.currentTarget.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="settings-amazon-email">Amazon Konto E-Mail</Label>
+                      <Input
+                        id="settings-amazon-email"
+                        placeholder="konto@example.com"
+                        value={learningConnectors.amazonEmail}
+                        onChange={(event) =>
+                          setLearningConnectors((current) => ({
+                            ...current,
+                            amazonEmail: event.currentTarget.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <Label htmlFor="settings-kindle-library">Kindle Bibliothek</Label>
+                      <Input
+                        id="settings-kindle-library"
+                        value={learningConnectors.kindleLibraryUrl}
+                        onChange={(event) =>
+                          setLearningConnectors((current) => ({
+                            ...current,
+                            kindleLibraryUrl: event.currentTarget.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <Label htmlFor="settings-kindle-label">Import Label</Label>
+                      <Input
+                        id="settings-kindle-label"
+                        value={learningConnectors.kindleImportLabel}
+                        onChange={(event) =>
+                          setLearningConnectors((current) => ({
+                            ...current,
+                            kindleImportLabel: event.currentTarget.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openExternal(learningConnectors.kindleLibraryUrl)}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Kindle öffnen
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <Youtube className="h-4 w-4" />
+                    YouTube Import
+                  </div>
+                  <div className="mt-3 space-y-1.5">
+                    <Label htmlFor="settings-youtube-key">YouTube API Key</Label>
+                    <Input
+                      id="settings-youtube-key"
+                      type="password"
+                      placeholder="Optional fuer spaetere automatische Kanal-Syncs"
+                      value={learningConnectors.youtubeApiKey}
+                      onChange={(event) =>
+                        setLearningConnectors((current) => ({
+                          ...current,
+                          youtubeApiKey: event.currentTarget.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-border/70 bg-muted/35 p-4">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <FileText className="h-4 w-4" />
+                    Notizen Ablage
+                  </div>
+                  <div className="mt-3 space-y-1.5">
+                    <Label htmlFor="settings-learning-folder">Drive/Export Ordner</Label>
+                    <Input
+                      id="settings-learning-folder"
+                      value={learningConnectors.googleDriveFolder}
+                      onChange={(event) =>
+                        setLearningConnectors((current) => ({
+                          ...current,
+                          googleDriveFolder: event.currentTarget.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <Button type="button" className="w-full" onClick={saveLearningConnectors}>
+                  Lern-Connectoren speichern
+                </Button>
               </div>
             )}
 
