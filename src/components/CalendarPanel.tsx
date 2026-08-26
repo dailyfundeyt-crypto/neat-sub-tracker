@@ -217,7 +217,6 @@ export function CalendarPanel({ userId }: { userId: string }) {
           icon: "/connect-logo.svg",
           badge: "/connect-logo.svg",
           tag: notificationKey,
-          renotify: true,
         });
 
         notification.onclick = () => {

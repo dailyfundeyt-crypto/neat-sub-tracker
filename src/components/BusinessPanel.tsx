@@ -162,10 +162,10 @@ function isAgent(value: unknown): value is Agent {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
   return (
-    typeof item.id === "string" &&
-    typeof item.label === "string" &&
-    typeof item.email === "string" &&
-    typeof item.avatarUrl === "string"
+    typeof item['id'] === "string" &&
+    typeof item['label'] === "string" &&
+    typeof item['email'] === "string" &&
+    typeof item['avatarUrl'] === "string"
   );
 }
 
@@ -173,10 +173,10 @@ function isCompany(value: unknown): value is Company {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
   return (
-    typeof item.id === "string" &&
-    typeof item.name === "string" &&
-    Array.isArray(item.agents) &&
-    item.agents.every(isAgent)
+    typeof item['id'] === "string" &&
+    typeof item['name'] === "string" &&
+    Array.isArray(item['agents']) &&
+    item['agents'].every(isAgent)
   );
 }
 
@@ -184,11 +184,11 @@ function isChatMessage(value: unknown): value is ChatMessage {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
   return (
-    typeof item.id === "string" &&
-    typeof item.companyId === "string" &&
-    typeof item.role === "string" &&
-    typeof item.body === "string" &&
-    typeof item.createdAt === "string"
+    typeof item['id'] === "string" &&
+    typeof item['companyId'] === "string" &&
+    typeof item['role'] === "string" &&
+    typeof item['body'] === "string" &&
+    typeof item['createdAt'] === "string"
   );
 }
 
@@ -196,16 +196,16 @@ function isAgentTask(value: unknown): value is AgentTask {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
   return (
-    typeof item.id === "string" &&
-    typeof item.companyId === "string" &&
-    typeof item.agentId === "string" &&
-    typeof item.messageId === "string" &&
-    typeof item.email === "string" &&
-    typeof item.subject === "string" &&
-    typeof item.body === "string" &&
-    typeof item.status === "string" &&
-    typeof item.createdAt === "string" &&
-    typeof item.updatedAt === "string"
+    typeof item['id'] === "string" &&
+    typeof item['companyId'] === "string" &&
+    typeof item['agentId'] === "string" &&
+    typeof item['messageId'] === "string" &&
+    typeof item['email'] === "string" &&
+    typeof item['subject'] === "string" &&
+    typeof item['body'] === "string" &&
+    typeof item['status'] === "string" &&
+    typeof item['createdAt'] === "string" &&
+    typeof item['updatedAt'] === "string"
   );
 }
 
@@ -213,15 +213,15 @@ function isBusinessState(value: unknown): value is BusinessState {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
   return (
-    typeof item.activeCompanyId === "string" &&
-    Array.isArray(item.selectedAgentIds) &&
-    item.selectedAgentIds.every((id) => typeof id === "string") &&
-    Array.isArray(item.companies) &&
-    item.companies.every(isCompany) &&
-    Array.isArray(item.messages) &&
-    item.messages.every(isChatMessage) &&
-    Array.isArray(item.tasks) &&
-    item.tasks.every(isAgentTask)
+    typeof item['activeCompanyId'] === "string" &&
+    Array.isArray(item['selectedAgentIds']) &&
+    item['selectedAgentIds'].every((id) => typeof id === "string") &&
+    Array.isArray(item['companies']) &&
+    item['companies'].every(isCompany) &&
+    Array.isArray(item['messages']) &&
+    item['messages'].every(isChatMessage) &&
+    Array.isArray(item['tasks']) &&
+    item['tasks'].every(isAgentTask)
   );
 }
 
@@ -335,7 +335,7 @@ export function BusinessPanel({ userId }: { userId: string }) {
     : null;
 
   function selectCompany(companyId: string) {
-    const company = state.companies.find((item) => item.id === companyId);
+    const company = state.companies.find((item) => item['id'] === companyId);
     if (!company) return;
     const firstAgentId = company.agents[0]?.id;
     setState((current) => ({
@@ -472,7 +472,7 @@ export function BusinessPanel({ userId }: { userId: string }) {
   }
 
   function reopenMail(task: AgentTask) {
-    const agent = activeCompany.agents.find((item) => item.id === task.agentId);
+    const agent = activeCompany.agents.find((item) => item['id'] === task.agentId);
     if (!agent) return;
     openMailDraft(activeCompany, [agent], task.body);
   }
@@ -710,7 +710,7 @@ export function BusinessPanel({ userId }: { userId: string }) {
               </div>
             ) : (
               openTasks.map((task) => {
-                const agent = activeCompany.agents.find((item) => item.id === task.agentId);
+                const agent = activeCompany.agents.find((item) => item['id'] === task.agentId);
                 return (
                   <div key={task.id} className="rounded-2xl border border-border p-3">
                     <div className="flex items-start gap-3">

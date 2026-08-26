@@ -125,12 +125,12 @@ function isRateSession(value: unknown): value is RateSession {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
   return (
-    typeof item.title === "string" &&
-    typeof item.client === "string" &&
-    typeof item.orderValue === "number" &&
-    typeof item.minHourlyRate === "number" &&
-    typeof item.startedAt === "number" &&
-    (typeof item.warnedAt === "number" || item.warnedAt === null)
+    typeof item['title'] === "string" &&
+    typeof item['client'] === "string" &&
+    typeof item['orderValue'] === "number" &&
+    typeof item['minHourlyRate'] === "number" &&
+    typeof item['startedAt'] === "number" &&
+    (typeof item['warnedAt'] === "number" || item['warnedAt'] === null)
   );
 }
 
@@ -350,7 +350,6 @@ export function HourlyRateTracker() {
         icon: "/connect-logo.svg",
         badge: "/connect-logo.svg",
         tag: `connect-rate-${session.startedAt}`,
-        renotify: true,
       });
 
       notification.onclick = () => {
