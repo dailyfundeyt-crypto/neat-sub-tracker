@@ -4,6 +4,8 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthScreen } from "@/components/AuthScreen";
 import { AppShell } from "@/components/AppShell";
+import { consumeOAuthRedirect } from "@/lib/oauth-callback";
+
 
 const appTitle = "Connect – Abos, Kosten und Kündigungen im Blick";
 const appDescription =
@@ -39,12 +41,15 @@ function Index() {
       setSession(next);
       setReady(true);
     });
-    void supabase.auth.getSession().then(({ data }) => {
+    void (async () => {
+      await consumeOAuthRedirect();
+      const { data } = await supabase.auth.getSession();
       setSession(data.session);
       setReady(true);
-    });
+    })();
     return () => sub.subscription.unsubscribe();
   }, []);
+
 
   if (!ready) {
     return <div className="min-h-dvh bg-background" />;
