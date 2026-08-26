@@ -350,7 +350,6 @@ export function HourlyRateTracker() {
         icon: "/connect-logo.svg",
         badge: "/connect-logo.svg",
         tag: `connect-rate-${session.startedAt}`,
-        renotify: true,
       });
 
       notification.onclick = () => {
