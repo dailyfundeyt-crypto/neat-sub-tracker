@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790292566109,
+      "tag": "0000_add_discount_fields_to_subscriptions",
+      "breakpoints": true
+    }
+  ]
+}

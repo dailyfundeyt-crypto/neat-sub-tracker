@@ -279,6 +279,11 @@ export type Database = {
           category: string
           created_at: string
           credit: number
+          discount_code: string | null
+          discount_description: string | null
+          discount_title: string | null
+          discount_url: string | null
+          discount_valid_until: string | null
           group_name: string
           id: string
           logo_url: string | null
@@ -294,6 +299,11 @@ export type Database = {
           category?: string
           created_at?: string
           credit?: number
+          discount_code?: string | null
+          discount_description?: string | null
+          discount_title?: string | null
+          discount_url?: string | null
+          discount_valid_until?: string | null
           group_name?: string
           id?: string
           logo_url?: string | null
@@ -309,6 +319,11 @@ export type Database = {
           category?: string
           created_at?: string
           credit?: number
+          discount_code?: string | null
+          discount_description?: string | null
+          discount_title?: string | null
+          discount_url?: string | null
+          discount_valid_until?: string | null
           group_name?: string
           id?: string
           logo_url?: string | null
